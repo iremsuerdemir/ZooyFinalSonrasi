@@ -189,7 +189,7 @@ class _BildirimlerEkraniState extends State<BildirimlerEkrani> {
       BuildContext context, NotificationModel notification, int index) {
     // Okunmamış bildirimler için gri arka plan, okunmuş bildirimler için beyaz
     final Color backgroundColor =
-        notification.isRead ? Colors.white : Colors.grey[200]!;
+        notification.isRead ? Colors.white : Colors.grey[100]!;
 
     return Card(
       margin: const EdgeInsets.only(bottom: 10),

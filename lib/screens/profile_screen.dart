@@ -20,6 +20,7 @@ import 'package:zoozy/services/notification_service.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:zoozy/services/comment_service_http.dart';
 import 'package:zoozy/models/comment.dart';
+import 'package:zoozy/services/user_service.dart'; // Backend User Service
 
 class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});
@@ -31,6 +32,7 @@ class ProfileScreen extends StatefulWidget {
 class _ProfileScreenState extends State<ProfileScreen> {
   String username = 'İrem Su Erdemir';
   String email = '7692003@gmail.com';
+  String? _photoUrl; // Backend photo URL
   ImageProvider? _profileImage;
   final NotificationService _notificationService = NotificationService();
   final CommentServiceHttp _commentService = CommentServiceHttp();
@@ -157,12 +159,37 @@ class _ProfileScreenState extends State<ProfileScreen> {
           username = "Misafir Kullanıcı";
           email = "";
           _profileImage = null;
+          _photoUrl = null;
         });
       }
       return;
     }
 
     final prefs = await SharedPreferences.getInstance();
+
+    // --- BACKEND SENKRONİZASYON ---
+    // Eğer internet varsa, backend'den kullanıcının güncel fotoğrafını çek
+    try {
+      final firebaseUid = prefs.getString('firebaseUid');
+      if (firebaseUid != null) {
+        final userService = UserService();
+        final user = await userService.getUser(firebaseUid);
+        if (user != null) {
+          // Backend'den gelen veriyi yerel depolamaya güncelle
+          await prefs.setString('displayName', user.displayName ?? '');
+          await prefs.setString('email', user.email ?? '');
+          if (user.photoUrl != null && user.photoUrl!.isNotEmpty) {
+            await prefs.setString('photoUrl', user.photoUrl!);
+          } else {
+            await prefs.remove('photoUrl');
+          }
+        }
+      }
+    } catch (e) {
+      print("Profil verisi backend'den senkronize edilemedi: $e");
+    }
+    // ----------------------------
+
     setState(() {
       // İsim: önce backend ile senkronize olan displayName, sonra eski username anahtarı
       username = prefs.getString('displayName') ??
@@ -170,32 +197,46 @@ class _ProfileScreenState extends State<ProfileScreen> {
           'İrem Su Erdemir';
       email = prefs.getString('email') ?? '7692003@gmail.com';
 
-      // 1) Tercihen backend'den gelen photoUrl (data:image... veya http url)
-      final photoUrl = prefs.getString('photoUrl');
+      // 1) PhotoUrl'i State'e al
+      _photoUrl = prefs.getString('photoUrl');
       final localProfileImage = prefs.getString('profileImagePath');
 
       ImageProvider? resolvedImage;
+      bool isWebUrl = false;
 
       try {
-        if (photoUrl != null && photoUrl.isNotEmpty) {
+        if (_photoUrl != null && _photoUrl!.isNotEmpty) {
           // data:image/png;base64,... formatı
-          if (photoUrl.startsWith('data:image/')) {
-            final base64Index = photoUrl.indexOf('base64,');
+          if (_photoUrl!.startsWith('data:image/')) {
+            final base64Index = _photoUrl!.indexOf('base64,');
             if (base64Index != -1) {
-              final base64Str = photoUrl.substring(base64Index + 7);
+              final base64Str = _photoUrl!.substring(base64Index + 7);
               final bytes = base64Decode(base64Str);
               resolvedImage = MemoryImage(bytes);
             }
           }
           // Dış URL formatı
-          else if (photoUrl.startsWith('http://') ||
-              photoUrl.startsWith('https://')) {
+          else if (_photoUrl!.startsWith('http://') ||
+              _photoUrl!.startsWith('https://')) {
+            // URL olduğunda _profileImage null kalır, build içinde CachedNetworkImage kullanılır
+            isWebUrl = true;
             resolvedImage = null;
+          }
+          // Raw Base64 tahmini (uzun string)
+          else if (_photoUrl!.length > 200) {
+            try {
+              final bytes = base64Decode(_photoUrl!);
+              resolvedImage = MemoryImage(bytes);
+            } catch (_) {
+              // Base64 değilse yoksay
+            }
           }
         }
 
         // 2) Eğer photoUrl yoksa veya çözülemediyse, eski local base64 kaydını kullan
-        if (resolvedImage == null &&
+        // FAKAT eğer web URL varsa, fallback yapma (backend'den gelen URL önceliklidir)
+        if (!isWebUrl &&
+            resolvedImage == null &&
             localProfileImage != null &&
             localProfileImage.isNotEmpty) {
           final bytes = base64Decode(localProfileImage);
@@ -294,19 +335,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
   @override
   Widget build(BuildContext context) {
-    // photoUrl'yi _loadProfileData ile zaten state'e alıyoruz
-    final photoUrl = (() {
-      final prefs = SharedPreferences.getInstance();
-      // Bu satırda prefs bir Future olduğu için doğrudan kullanılamaz, photoUrl zaten state'ten geliyor
-      // Eğer _profileImage null ise, _loadProfileData'da photoUrl state'e atanıyor
-      // Burada photoUrl'yi _loadProfileData'dan almak daha doğru
-      // Yani: photoUrl = prefs.getString('photoUrl') yerine, _loadProfileData'da setState ile alınan photoUrl kullanılmalı
-      // Bu nedenle aşağıda email ve username gibi state'ten alınan photoUrl kullanılacak
-      // Eğer _profileImage null ise, photoUrl'yi _loadProfileData'dan al
-      // Yani: _profileImage != null ? ... : CachedNetworkImage(imageUrl: photoUrl, ...)
-      // Kodun devamında zaten _profileImage ve photoUrl state'ten geliyor
-      return (context.findAncestorStateOfType<_ProfileScreenState>()?.email ?? '');
-    })();
     return Scaffold(
       body: Container(
         decoration: const BoxDecoration(
@@ -442,7 +470,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                 child: null,
                               )
                             : CachedNetworkImage(
-                                imageUrl: photoUrl,
+                                imageUrl: _photoUrl ?? '',
                                 imageBuilder: (context, imageProvider) => CircleAvatar(
                                   radius: 40,
                                   backgroundColor: Colors.grey,

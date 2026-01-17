@@ -35,6 +35,21 @@ class CaregiverCardBalanced extends StatefulWidget {
 
 class _CaregiverCardBalancedState extends State<CaregiverCardBalanced> {
   final FavoriteService _favoriteService = FavoriteService();
+  late bool _isFavorite;
+
+  @override
+  void initState() {
+    super.initState();
+    _isFavorite = widget.isFavorite;
+  }
+
+  @override
+  void didUpdateWidget(CaregiverCardBalanced oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (widget.isFavorite != oldWidget.isFavorite) {
+      _isFavorite = widget.isFavorite;
+    }
+  }
 
   ImageProvider _getImageProvider(String path) {
     if (path.isEmpty || path == 'null') { // Boşsa veya string olarak null gelirse placeholder dön
@@ -84,19 +99,20 @@ class _CaregiverCardBalancedState extends State<CaregiverCardBalanced> {
       subtitle: widget.suitability,
       imageUrl: widget.imagePath,
       profileImageUrl: "assets/images/caregiver1.png",
-      tip: widget.tip, // Dinamik tip kullanımı
+      tip: widget.tip, 
     );
 
-    bool isFavorite = await _favoriteService.isFavorite(
-      title: item.title,
-      tip: item.tip,
-      imageUrl: item.imageUrl,
-    );
+    // Optimistik güncelleme: UI'ı hemen değiştir
+    final bool previousState = _isFavorite;
+    setState(() {
+      _isFavorite = !_isFavorite;
+    });
 
     bool success;
     String message;
 
-    if (isFavorite) {
+    // Önceki duruma göre işlem yap (true ise çıkar, false ise ekle)
+    if (previousState) {
       success = await _favoriteService.removeFavorite(
         title: item.title,
         tip: item.tip,
@@ -113,6 +129,13 @@ class _CaregiverCardBalancedState extends State<CaregiverCardBalanced> {
     }
 
     if (mounted) {
+      // Hata durumunda UI'ı eski haline getir
+      if (!success) {
+        setState(() {
+          _isFavorite = previousState;
+        });
+      }
+
       ScaffoldMessenger.of(context)
           .showSnackBar(SnackBar(content: Text(message)));
     }
@@ -169,6 +192,7 @@ class _CaregiverCardBalancedState extends State<CaregiverCardBalanced> {
                           image: DecorationImage(
                             image: _getImageProvider(widget.imagePath),
                             fit: BoxFit.cover,
+                            alignment: Alignment.topCenter, // Yüzlerin daha iyi görünmesi için üstten hizala
                           ),
                         ),
                       ),
@@ -217,7 +241,7 @@ class _CaregiverCardBalancedState extends State<CaregiverCardBalanced> {
                           child: Icon(
                             Icons.favorite,
                             size: 22,
-                            color: widget.isFavorite
+                            color: _isFavorite
                                 ? _accentColor
                                 : Colors.white.withValues(alpha: 0.6),
                           ),

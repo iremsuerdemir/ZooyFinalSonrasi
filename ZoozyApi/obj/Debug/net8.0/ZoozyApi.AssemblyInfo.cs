@@ -14,7 +14,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("ZoozyApi")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+87d28819ab4d057486908355ec4df87a7c95ad44")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+abc91c4a8d2bf7bfdbfb08bf52af2ce939b400d3")]
 [assembly: System.Reflection.AssemblyProductAttribute("ZoozyApi")]
 [assembly: System.Reflection.AssemblyTitleAttribute("ZoozyApi")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]

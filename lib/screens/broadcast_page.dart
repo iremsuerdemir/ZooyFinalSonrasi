@@ -103,28 +103,8 @@ class _BackersNearbyScreenState extends State<BackersNearbyScreen> {
           otherSkills: "İlk Yardım Sertifikası",
           followers: 125,
           following: 30,
-          reviews: const [
-            {
-              'id': 'r1',
-              'name': 'Örnek Kullanıcı',
-              'comment': 'Harika bir deneyimdi!',
-              'rating': 5,
-              'timePosted': '2023-01-01T12:00:00Z',
-              'photoUrl': 'assets/images/profile_placeholder.png'
-            }
-          ],
-          moments: const [
-            {
-              'userName': '@tankscornermoments',
-              'displayName': 'Anlar',
-              'userPhoto': 'assets/images/caregiver3.jpg',
-              'postImage': 'assets/images/caregiver3.jpg',
-              'description': 'Güzel bir gün...',
-              'likes': 10,
-              'comments': 5,
-              'timePosted': '2023-01-01T12:00:00Z'
-            },
-          ],
+          reviews: const [],
+          moments: const [],
         ),
       ),
     );
@@ -192,7 +172,7 @@ class _BackersNearbyScreenState extends State<BackersNearbyScreen> {
                   left: horizontalPadding, top: 16.0, bottom: 8.0),
               child: OutlinedButton.icon(
                 onPressed: () {},
-                icon: const Icon(Icons.filter_list, size: 20),
+               
                 label: const Text(
                   'Filtrele',
                   style: TextStyle(

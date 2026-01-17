@@ -45,8 +45,8 @@ class _BackersListScreenState extends State<BackersListScreen> {
       List<Map<String, dynamic>> newBackers = [];
 
       for (var s in services) {
-        String image = s['userPhotoUrl'] ?? 'assets/images/caregiver1.png';
-        if (image.isEmpty) image = 'assets/images/caregiver1.png';
+        String image = s['userPhotoUrl'] ?? 'assets/images/irem.jpeg';
+        if (image.isEmpty) image = 'assets/images/irem.jpeg';
 
         String bio = s['description'] ?? "";
         if (bio.isEmpty) {
@@ -142,31 +142,14 @@ class _BackersListScreenState extends State<BackersListScreen> {
           otherSkills: "İlk Yardım Sertifikası",
           followers: 125,
           following: 30,
-          reviews: const [
-            {
-              'id': 'r1',
-              'name': 'Örnek Kullanıcı',
-              'comment': 'Harika bir deneyimdi!',
-              'rating': 5,
-              'timePosted': '2023-01-01T12:00:00Z',
-              'photoUrl': 'assets/images/profile_placeholder.png'
-            }
-          ],
-          moments: const [
-            {
-              'userName': '@tankscornermoments',
-              'displayName': 'Anlar',
-              'userPhoto': 'assets/images/caregiver3.jpg',
-              'postImage': 'assets/images/caregiver3.jpg',
-              'description': 'Güzel bir gün...',
-              'likes': 10,
-              'comments': 5,
-              'timePosted': '2023-01-01T12:00:00Z'
-            },
-          ],
+          reviews: const [],
+          moments: const [],
+          favoriteTip: "explore",
         ),
       ),
-    );
+    ).then((_) {
+      _favorileriYukle();
+    });
   }
 
   // Favori değişince listeyi yenile
@@ -260,11 +243,7 @@ class _BackersListScreenState extends State<BackersListScreen> {
         elevation: 2,
         actions: [
           // Filtre butonu buraya taşındı
-          IconButton(
-            icon: const Icon(Icons.filter_list, color: _accentColor),
-            onPressed: _showFilterBottomSheet,
-            tooltip: 'Filtrele',
-          ),
+          
           IconButton(
             icon: const Icon(Icons.search, color: _primaryColor),
             onPressed: () {

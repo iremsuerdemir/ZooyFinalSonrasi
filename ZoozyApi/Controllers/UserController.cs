@@ -173,15 +173,15 @@ namespace ZoozyApi.Controllers
                 user.DisplayName = dto.DisplayName;
 
             // PhotoUrl null değilse VE boş string değilse VE sadece boşluk değilse güncelle
-            // Ayrıca "data:image" ile başlamalı (base64 format kontrolü)
+            // Hem Base64 ("data:image") hem de Web URL ("http") formatlarını kabul et
             if (dto.PhotoUrl != null)
             {
                 var trimmedPhotoUrl = dto.PhotoUrl.Trim();
                 
-                // Geçerli base64 string kontrolü
+                // Geçerli URL veya Base64 string kontrolü
                 if (!string.IsNullOrWhiteSpace(trimmedPhotoUrl) && 
-                    trimmedPhotoUrl.Length > 20 && // Minimum uzunluk kontrolü
-                    trimmedPhotoUrl.StartsWith("data:image", StringComparison.OrdinalIgnoreCase))
+                    (trimmedPhotoUrl.StartsWith("data:image", StringComparison.OrdinalIgnoreCase) || 
+                     trimmedPhotoUrl.StartsWith("http", StringComparison.OrdinalIgnoreCase)))
                 {
                     user.PhotoUrl = trimmedPhotoUrl;
                     System.Diagnostics.Debug.WriteLine($"✅ PhotoUrl güncellendi: Uzunluk={user.PhotoUrl.Length}, İlk 50 karakter: {user.PhotoUrl.Substring(0, Math.Min(50, user.PhotoUrl.Length))}");

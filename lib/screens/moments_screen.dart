@@ -28,7 +28,8 @@ class _MomentsScreenState extends State<MomentsScreen> {
       "description": "Bugün Bunny ile parkta yürüyüşteydik ",
       "likes": 15,
       "comments": 4,
-      "timePosted": DateTime.now().subtract(const Duration(hours: 1)),
+      // Sabit tarih kullanıyoruz ki cardId değişmesin ve yorumlar kaybolmasın
+      "timePosted": DateTime(2026, 1, 17, 10, 30), 
     },
     {
       "userName": "irem",
@@ -38,7 +39,7 @@ class _MomentsScreenState extends State<MomentsScreen> {
       "description": "Yeni müşterimin köpeğiyle ilk günümdü ",
       "likes": 42,
       "comments": 10,
-      "timePosted": DateTime.now().subtract(const Duration(hours: 3)),
+      "timePosted": DateTime(2026, 1, 17, 8, 0),
     },
     {
       "userName": "beyzaa",
@@ -48,7 +49,7 @@ class _MomentsScreenState extends State<MomentsScreen> {
       "description": "Evcil dostlarımızı sevgiyle ağırlıyoruz ",
       "likes": 33,
       "comments": 6,
-      "timePosted": DateTime.now().subtract(const Duration(days: 1)),
+      "timePosted": DateTime(2026, 1, 16, 15, 45),
     },
   ];
 

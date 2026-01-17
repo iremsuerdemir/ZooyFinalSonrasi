@@ -116,22 +116,14 @@ class _ExploreScreenState extends State<ExploreScreen> {
           otherSkills: "İlk Yardım, Temel Eğitim",
           followers: data["followers"] as int? ?? 50,
           following: data["following"] as int? ?? 20,
-           moments: const [
-            {
-              'userName': '@tankscornermoments',
-              'displayName': 'Anlar',
-              'userPhoto': 'assets/images/cat1.jpg',
-              'postImage': 'assets/images/cat1.jpg',
-              'description': 'Harika zaman geçiriyoruz...',
-              'likes': 10,
-              'comments': 5,
-              'timePosted': '2023-01-01T12:00:00Z'
-            }
-          ],
+          moments: const [],
           reviews: const [], // Şimdilik boş liste
+          favoriteTip: "explore",
         ),
       ),
-    );
+    ).then((_) {
+      _favorileriYukle();
+    });
   }
 
   /// Backend'den favori bakıcı isimlerini yükler.
@@ -139,7 +131,7 @@ class _ExploreScreenState extends State<ExploreScreen> {
     try {
       final favoriteService = FavoriteService();
       final favorites =
-          await favoriteService.getUserFavorites(tip: "caregiver");
+          await favoriteService.getUserFavorites(tip: "explore");
       final mevcutIsimler = favorites.map((f) => f.title).toSet();
       setState(() {
         favoriIsimleri = mevcutIsimler;
@@ -161,7 +153,9 @@ class _ExploreScreenState extends State<ExploreScreen> {
       MaterialPageRoute(
         builder: (context) => BackersNearbyScreen(serviceName: serviceName),
       ),
-    );
+    ).then((_) {
+      _favorileriYukle();
+    });
   }
 
 
@@ -365,7 +359,7 @@ class _ExploreScreenState extends State<ExploreScreen> {
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 const Text(
-                  "Yakınınızdaki Bakıcılar",
+                  "Bakıcılar",
                   style: TextStyle(
                       fontWeight: FontWeight.bold,
                       fontSize: 18,
@@ -377,7 +371,9 @@ class _ExploreScreenState extends State<ExploreScreen> {
                       context,
                       MaterialPageRoute(
                           builder: (context) => const BackersListScreen()),
-                    );
+                    ).then((_) {
+                      _favorileriYukle();
+                    });
                   },
                   child: const Text(
                     "Daha Fazla >",

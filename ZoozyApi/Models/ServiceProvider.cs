@@ -1,4 +1,5 @@
 using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
 
 namespace ZoozyApi.Models;
 
@@ -20,6 +21,9 @@ public class ServiceProvider
     public bool OffersVideoCall { get; set; }
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
     public DateTime UpdatedAt { get; set; } = DateTime.UtcNow;
+
+    [NotMapped]
+    public string? PhotoUrl { get; set; }
 
     public ICollection<ServiceRequest> ServiceRequests { get; set; } = new List<ServiceRequest>();
 }

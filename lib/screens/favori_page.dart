@@ -178,31 +178,14 @@ class _FavoriPageState extends State<FavoriPage> {
   }
 
   Widget _favoriListesiOlustur() {
-    return ListView.builder(
-      physics: const BouncingScrollPhysics(),
-      padding: EdgeInsets.zero,
-      itemCount: favoriler.length,
-      itemBuilder: (context, index) {
-        final item = favoriler[index];
-
-        if (widget.favoriTipi == "caregiver" ||
-            widget.favoriTipi == "explore") {
-          return Padding(
-            padding: const EdgeInsets.only(bottom: 16.0),
-            child: CaregiverCardBalanced(
-              name: item.title,
-              imagePath: item.imageUrl,
-              suitability: item.subtitle,
-              isFavorite: true,
-              tip: widget.favoriTipi,
-              onFavoriteChanged: () {
-                _loadFavoriler();
-              },
-            ),
-          );
-        }
-
-        if (widget.favoriTipi == "moments") {
+    // Moments için liste görünümü (Instagram tarzı akış)
+    if (widget.favoriTipi == "moments") {
+      return ListView.builder(
+        physics: const BouncingScrollPhysics(),
+        padding: EdgeInsets.zero,
+        itemCount: favoriler.length,
+        itemBuilder: (context, index) {
+          final item = favoriler[index];
           return Padding(
             padding: const EdgeInsets.only(bottom: 16.0),
             child: MomentsPostCard(
@@ -217,9 +200,33 @@ class _FavoriPageState extends State<FavoriPage> {
               currentUserName: _currentUserName,
             ),
           );
-        }
+        },
+      );
+    }
 
-        return const SizedBox.shrink();
+    // Caregiver ve Explore için Grid görünümü (Kartların orantılı durması için)
+    return GridView.builder(
+      physics: const BouncingScrollPhysics(),
+      padding: const EdgeInsets.only(bottom: 16),
+      itemCount: favoriler.length,
+      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+        crossAxisCount: 2, // İki sütun
+        crossAxisSpacing: 12.0,
+        mainAxisSpacing: 12.0,
+        childAspectRatio: 0.7, // Kartın boyu enine göre daha uzun
+      ),
+      itemBuilder: (context, index) {
+        final item = favoriler[index];
+        return CaregiverCardBalanced(
+          name: item.title,
+          imagePath: item.imageUrl,
+          suitability: item.subtitle,
+          isFavorite: true,
+          tip: widget.favoriTipi,
+          onFavoriteChanged: () {
+            _loadFavoriler();
+          },
+        );
       },
     );
   }

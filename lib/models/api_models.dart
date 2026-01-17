@@ -65,6 +65,7 @@ class ServiceProviderModel {
     required this.offersVideoCall,
     required this.createdAt,
     required this.updatedAt,
+    this.photoUrl,
   });
 
   final String id;
@@ -79,6 +80,7 @@ class ServiceProviderModel {
   final bool offersVideoCall;
   final DateTime createdAt;
   final DateTime updatedAt;
+  final String? photoUrl;
 
   factory ServiceProviderModel.fromJson(Map<String, dynamic> json) =>
       ServiceProviderModel(
@@ -96,6 +98,7 @@ class ServiceProviderModel {
             DateTime.now().toUtc(),
         updatedAt: DateTime.tryParse(json['updatedAt'] as String? ?? '') ??
             DateTime.now().toUtc(),
+        photoUrl: json['photoUrl'] as String?,
       );
 }
 

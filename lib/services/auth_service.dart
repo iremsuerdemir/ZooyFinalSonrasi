@@ -328,6 +328,7 @@ class AuthService {
     await prefs.remove('photoUrl');
     await prefs.remove('provider');
     await prefs.remove('firebaseUid');
+    await prefs.remove('profileImagePath'); // Yerel profil resmini de temizle
     await prefs.remove('termsAccepted');
     await prefs.remove('privacyAccepted');
   }

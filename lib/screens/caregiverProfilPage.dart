@@ -40,6 +40,7 @@ class CaregiverProfilpage extends StatefulWidget {
   // Yeni eklenen parametreler
   final int? caregiverId;
   final Map<String, dynamic>? caregiverData;
+  final String favoriteTip;
 
   const CaregiverProfilpage({
     Key? key,
@@ -56,6 +57,7 @@ class CaregiverProfilpage extends StatefulWidget {
     this.following = 0,
     this.caregiverId,
     this.caregiverData,
+    this.favoriteTip = "caregiver",
   }) : super(key: key);
 
   @override
@@ -84,7 +86,7 @@ class _CaregiverProfilpageState extends State<CaregiverProfilpage> {
   Future<void> _checkIfFavorite() async {
     final exists = await _favoriteService.isFavorite(
       title: widget.displayName,
-      tip: "caregiver",
+      tip: widget.favoriteTip,
     );
     setState(() {
       _isFavorite = exists;
@@ -144,7 +146,7 @@ class _CaregiverProfilpageState extends State<CaregiverProfilpage> {
       subtitle: "Bakıcı - ${widget.userName}",
       imageUrl: widget.userPhoto,
       profileImageUrl: widget.userPhoto,
-      tip: "caregiver",
+      tip: widget.favoriteTip,
     );
 
     bool success;
@@ -382,8 +384,13 @@ class _CaregiverProfilpageState extends State<CaregiverProfilpage> {
             // --- 4. HAKKINDA ---
             _buildSectionTitle('Hakkımda 📚'),
             const SizedBox(height: 8),
-            Text(widget.bio,
-                style: TextStyle(color: Colors.grey.shade800, fontSize: 15)),
+            Text(
+              (widget.bio.length < 10 ||
+                      RegExp(r'(.)\1{4,}').hasMatch(widget.bio))
+                  ? "Merhaba! Ben hayvanları çok seviyorum ve onların mutluluğu benim için her şeyden önemli. Profesyonel bakım hizmetimle dostunuz emin ellerde. İhtiyaçlarınıza özel çözümler sunmak için buradayım, benimle iletişime geçmekten çekinmeyin."
+                  : widget.bio,
+              style: TextStyle(color: Colors.grey.shade800, fontSize: 15),
+            ),
 
             const SizedBox(height: 24),
 

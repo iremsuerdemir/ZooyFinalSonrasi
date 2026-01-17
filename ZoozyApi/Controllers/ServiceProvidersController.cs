@@ -20,10 +20,26 @@ public class ServiceProvidersController : ControllerBase
     [HttpGet]
     public async Task<ActionResult<IEnumerable<ServiceProviderModel>>> GetAllAsync(CancellationToken cancellationToken)
     {
-        var providers = await _context.ServiceProviders
-            .AsNoTracking()
-            .OrderByDescending(p => p.UpdatedAt)
-            .ToListAsync(cancellationToken);
+        // ServiceProvider tablosunu User tablosu ile join'le ve PhotoUrl bilgisini al
+        var query = from sp in _context.ServiceProviders.AsNoTracking()
+                    join u in _context.Users.AsNoTracking() on sp.FirebaseId equals u.FirebaseUid into userGroup
+                    from user in userGroup.DefaultIfEmpty() // Left Join
+                    orderby sp.UpdatedAt descending
+                    select new
+                    {
+                        Provider = sp,
+                        PhotoUrl = user != null ? user.PhotoUrl : null
+                    };
+
+        var resultList = await query.ToListAsync(cancellationToken);
+
+        // User tablosundan gelen PhotoUrl bilgisini ServiceProvider nesnesine ekle
+        var providers = resultList.Select(item =>
+        {
+            var p = item.Provider;
+            p.PhotoUrl = item.PhotoUrl;
+            return p;
+        }).ToList();
 
         return Ok(providers);
     }
