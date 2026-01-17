@@ -37,6 +37,29 @@ class _ServiceDatePageState extends State<ServiceDatePage> {
   void _onNext() {
     if (_isStartSelected) {
       if (_startDate != null && _startTime != null) {
+        // Eğer seçilen hizmet "Evcil Hayvan Taksi" ise bitiş zamanı sormadan devam et
+        if (widget.serviceName == 'Evcil Hayvan Taksi' || widget.serviceName == 'Taksi') {
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (context) => MyCitiesPage(),
+              settings: RouteSettings(
+                arguments: {
+                  'petName': widget.petName,
+                  'serviceName': widget.serviceName,
+                  'startDate': _startDate,
+                  'startTime': _startTime,
+                  // Taksi için bitiş zamanı seçilmiyor, null veya başlangıçla aynı gönderilebilir.
+                  // Şimdilik başlangıç değeriyle aynı gönderiyoruz.
+                  'endDate': _startDate,
+                  'endTime': _startTime,
+                },
+              ),
+            ),
+          );
+          return;
+        }
+
         setState(() {
           _isStartSelected = false; // bitiş seçimine geç
         });
