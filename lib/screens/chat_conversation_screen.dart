@@ -109,9 +109,9 @@ class _ChatConversationScreenState extends State<ChatConversationScreen> {
   bool _isBackendMode = false; // Backend tabanlı mod mu?
 
   String get _historyKey =>
-      'chat_history_${widget.contactUsername ?? widget.jobUsername ?? "unknown"}';
+      'chat_history_${(widget.contactUsername ?? widget.jobUsername ?? "unknown").replaceAll(' ', '_')}';
   String get _deletedKey =>
-      'chat_deleted_${widget.contactUsername ?? widget.jobUsername ?? "unknown"}';
+      'chat_deleted_${(widget.contactUsername ?? widget.jobUsername ?? "unknown").replaceAll(' ', '_')}';
 
   @override
   void initState() {
@@ -151,7 +151,7 @@ class _ChatConversationScreenState extends State<ChatConversationScreen> {
       final messages = await _chatService.getMessages(widget.jobId!);
 
       // Backend'den gelen mesajları ChatMessage formatına dönüştür
-      final chatMessages = messages.map((msg) {
+      final backendMessages = messages.map((msg) {
         final isMe = msg.senderId == _currentUserId;
         return ChatMessage(
           text: msg.messageText,
@@ -160,9 +160,67 @@ class _ChatConversationScreenState extends State<ChatConversationScreen> {
         );
       }).toList();
 
+      // Merge Logic: Backend ve Yerel Veriyi Birleştir
+      final prefs = _prefs ??= await SharedPreferences.getInstance();
+
+      // 1. Silinme kontrolü
+      final isDeletedLocal = prefs.getBool(_deletedKey) ?? false;
+      final backendDeletedKey =
+          'chat_deleted_job_${widget.jobId}_user_${widget.jobUserId}';
+      final isBackendDeleted = prefs.getBool(backendDeletedKey) ?? false;
+
+      if (isDeletedLocal || isBackendDeleted) {
+        if (mounted) {
+          setState(() {
+            _messages = [];
+            _isLoadingMessages = false;
+          });
+        }
+        return;
+      }
+
+      // 2. Geçmiş kontrolü ve birleştirme
+      final rawHistory = prefs.getString(_historyKey);
+      List<ChatMessage> finalMessages = backendMessages;
+
+      if (rawHistory != null && rawHistory != '[]') {
+        try {
+          final List<dynamic> decoded = jsonDecode(rawHistory) as List<dynamic>;
+          final localMessages = decoded
+              .map(
+                (e) => ChatMessage.fromJson(
+                  Map<String, dynamic>.from(e as Map<dynamic, dynamic>),
+                ),
+              )
+              .toList();
+
+          if (localMessages.isNotEmpty) {
+            // Son yerel mesajın zamanına bak
+            final lastLocalTimestamp = localMessages.last.timestamp;
+
+            // Backend'den sadece bu zamandan SONRA gelen yeni mesajları al
+            final newBackendMessages = backendMessages
+                .where((bm) => bm.timestamp.isAfter(lastLocalTimestamp))
+                .toList();
+
+            // Local (içeriği temizlenmiş olabilir) + Yeni Backend Mesajları
+            finalMessages = [...localMessages, ...newBackendMessages];
+
+            // Güncel hali tekrar kaydet
+            await _saveMessages(finalMessages, markAsActive: true);
+          }
+        } catch (e) {
+          print('Local history parse hatası: $e');
+        }
+      } else if (rawHistory == null) {
+        // İlk kez yükleniyor veya history silinmiş -> Local'e kaydet
+        await _saveMessages(finalMessages, markAsActive: true);
+      }
+      // rawHistory == '[]' ise backend verisi kullanılsın (veya boş kalsın tercihe göre, şimdilik backend)
+
       if (mounted) {
         setState(() {
-          _messages = chatMessages;
+          _messages = finalMessages;
           _isLoadingMessages = false;
         });
       }

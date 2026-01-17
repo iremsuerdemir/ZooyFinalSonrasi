@@ -36,6 +36,10 @@ class CaregiverProfilpage extends StatefulWidget {
   final List<Map<String, dynamic>> reviews;
   final int followers;
   final int following;
+  
+  // Yeni eklenen parametreler
+  final int? caregiverId;
+  final Map<String, dynamic>? caregiverData;
 
   const CaregiverProfilpage({
     Key? key,
@@ -50,6 +54,8 @@ class CaregiverProfilpage extends StatefulWidget {
     this.reviews = const [],
     this.followers = 0,
     this.following = 0,
+    this.caregiverId,
+    this.caregiverData,
   }) : super(key: key);
 
   @override
@@ -182,6 +188,26 @@ class _CaregiverProfilpageState extends State<CaregiverProfilpage> {
     });
   }
 
+  ImageProvider _getImageProvider(String path) {
+    if (path.isEmpty || path == 'null') {
+      return const AssetImage('assets/images/caregiver1.png');
+    }
+
+    if (path.startsWith('http')) {
+      return NetworkImage(path);
+    } else if (path.startsWith('assets/')) {
+      return AssetImage(path);
+    } else if (path.length > 255 && !path.contains('\n')) {
+      try {
+        return MemoryImage(base64Decode(path));
+      } catch (_) {
+        return const AssetImage('assets/images/caregiver1.png');
+      }
+    } else {
+      return const AssetImage('assets/images/caregiver1.png');
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     // Ekran genişliğini alarak orantılı tasarıma yardımcı oluyoruz
@@ -236,7 +262,7 @@ class _CaregiverProfilpageState extends State<CaregiverProfilpage> {
               children: [
                 CircleAvatar(
                   radius: avatarRadius, // ORANTILI YARIÇAP
-                  backgroundImage: AssetImage(widget.userPhoto),
+                  backgroundImage: _getImageProvider(widget.userPhoto),
                 ),
                 const SizedBox(width: 16),
                 Expanded(
@@ -388,34 +414,8 @@ class _CaregiverProfilpageState extends State<CaregiverProfilpage> {
               ),
 
             // --- 6. MOMENTS ---
-            if (widget.moments.isNotEmpty) ...[
-              _buildSectionTitle('Anlar 📸'),
-              const SizedBox(height: 12),
-              Column(
-                children: widget.moments
-                    .map(
-                      (moment) => Padding(
-                        padding: const EdgeInsets.only(bottom: 16.0),
-                        child: MomentsPostCard(
-                          userName: moment['userName'],
-                          displayName: moment['displayName'],
-                          userPhoto: moment['userPhoto'],
-                          postImage: moment['postImage'],
-                          description: moment['description'],
-                          likes: moment['likes'],
-                          comments: moment['comments'],
-                          timePosted: moment['timePosted'] is String
-                              ? DateTime.parse(moment['timePosted'])
-                              : moment['timePosted'] as DateTime,
-                          currentUserName:
-                              _currentUserName ?? 'Bilinmeyen Kullanıcı',
-                        ),
-                      ),
-                    )
-                    .toList(),
-              ),
-              const SizedBox(height: 24),
-            ],
+            // Removed as per request
+
 
             // --- 7. REVIEWS ve Yorumlar ---
             _buildSectionTitle('Değerlendirmeler ⭐'),
@@ -459,7 +459,7 @@ class _CaregiverProfilpageState extends State<CaregiverProfilpage> {
                     },
                     icon: const Icon(Icons.rate_review, size: 20),
                     label: Text(
-                        "Yorum Ekle (${widget.reviews.length + _comments.length})"),
+                        "Yorum Ekle (${_comments.length})"),
                     style: ElevatedButton.styleFrom(
                       backgroundColor: primaryPurple, // Tema rengi
                       foregroundColor: Colors.white,
@@ -530,7 +530,7 @@ class _CaregiverProfilpageState extends State<CaregiverProfilpage> {
               height: 40, width: 1.5, color: primaryPurple.withOpacity(0.3)),
           Expanded(
               child:
-                  _buildStatItem(widget.reviews.length.toString(), "Yorum")),
+                  _buildStatItem(_comments.length.toString(), "Yorum")),
         ],
       ),
     );

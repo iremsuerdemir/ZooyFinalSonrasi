@@ -18,6 +18,8 @@ import 'package:zoozy/screens/settings_screen.dart';
 import 'package:zoozy/services/guest_access_service.dart';
 import 'package:zoozy/services/notification_service.dart';
 import 'package:cached_network_image/cached_network_image.dart';
+import 'package:zoozy/services/comment_service_http.dart';
+import 'package:zoozy/models/comment.dart';
 
 class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});
@@ -31,6 +33,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
   String email = '7692003@gmail.com';
   ImageProvider? _profileImage;
   final NotificationService _notificationService = NotificationService();
+  final CommentServiceHttp _commentService = CommentServiceHttp();
+  List<Comment> _comments = [];
   bool _hasUnreadNotifications = false;
 
   @override
@@ -38,6 +42,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
     super.initState();
     _loadProfileData();
     _checkNotifications();
+    _loadComments();
     // Periyodik olarak bildirimleri kontrol et (her 10 saniyede bir)
     _startNotificationPolling();
     // Build tamamlandıktan sonra çağır (setState during build hatasını önlemek için)
@@ -60,6 +65,33 @@ class _ProfileScreenState extends State<ProfileScreen> {
     // Load services from backend when screen initializes
     final serviceProvider = Provider.of<ServiceProvider>(context, listen: false);
     await serviceProvider.loadServices();
+  }
+
+  Future<void> _loadComments() async {
+    final prefs = await SharedPreferences.getInstance();
+    // Kullanıcının benzersiz `username`'ini al (örn: irem_erdemir)
+    // Eğer yoksa display name'i formatla (örn: İrem Erdemir -> irem_erdemir)
+    // Dikkat: Bu logic CaregiverProfilPage ile AYNI olmalı (backend uyumu için)
+    String rawUsername = prefs.getString('username') ??
+        (prefs.getString('displayName') ?? 'kullanici')
+            .toLowerCase()
+            .replaceAll(RegExp(r'[^\w]+'), '_');
+
+    // Boşluklar veya geçersiz karakterler varsa temizle
+    String formattedCardId =
+        rawUsername.toLowerCase().replaceAll(RegExp(r'[^\w]+'), '_');
+
+    try {
+      final comments =
+          await _commentService.getCommentsForCard(formattedCardId);
+      if (mounted) {
+        setState(() {
+          _comments = comments;
+        });
+      }
+    } catch (e) {
+      print('Profil yorumları yüklenirken hata: $e');
+    }
   }
 
   @override
@@ -500,7 +532,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     child: Row(
                       mainAxisAlignment: MainAxisAlignment.spaceAround,
                       children: [
-                        buildStatColumn('Yorum', '0'),
+                        buildStatColumn(
+                            'Yorum',
+                            _comments.length
+                                .toString()), // Dinamik yorum sayısı
                         buildStatColumn(
                           'Rozetlerim',
                           '',
@@ -676,13 +711,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                               fontWeight: FontWeight.bold,
                                             ),
                                           ),
-                                          if (price != null)
-                                            Text(
-                                              "Fiyat: $price₺",
-                                              style: const TextStyle(
-                                                  fontSize: 14,
-                                                  color: Colors.grey),
-                                            ),
                                           const SizedBox(height: 4),
                                           Text(
                                             address,

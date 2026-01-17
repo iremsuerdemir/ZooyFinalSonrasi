@@ -1,12 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:zoozy/services/favorite_service.dart';
+import 'package:zoozy/services/user_service_api.dart';
 
 // Gerekli component import'ları
 // import 'package:zoozy/components/CaregiverCard.dart'; // Eğer CaregiverCardAsset kullanılmıyorsa silinebilir.
 import 'package:zoozy/components/bottom_navigation_bar.dart';
 import 'package:zoozy/components/caregivercardModern.dart'; // Fiyatsız yeni versiyonun burada olduğunu varsayıyoruz.
 
-import 'package:zoozy/screens/CaregiverProfilpage.dart';
+import 'package:zoozy/screens/caregiverProfilPage.dart';
 
 // Tema Renkleri
 const Color _primaryColor = Colors.deepPurple;
@@ -22,11 +23,73 @@ class BackersListScreen extends StatefulWidget {
 
 class _BackersListScreenState extends State<BackersListScreen> {
   Set<String> favoriIsimleri = {};
+  List<Map<String, dynamic>> _backers = [];
+  bool _isLoading = true;
 
   @override
   void initState() {
     super.initState();
-    _favorileriYukle();
+    _loadData();
+  }
+
+  Future<void> _loadData() async {
+    await _favorileriYukle();
+    await _loadBackers();
+  }
+
+  Future<void> _loadBackers() async {
+    try {
+      final api = UserServiceApi();
+      final services = await api.getOtherUsersServices();
+
+      List<Map<String, dynamic>> newBackers = [];
+
+      for (var s in services) {
+        String image = s['userPhotoUrl'] ?? 'assets/images/caregiver1.png';
+        if (image.isEmpty) image = 'assets/images/caregiver1.png';
+
+        String bio = s['description'] ?? "";
+        if (bio.isEmpty) {
+          bio = "Merhaba! Ben hayvanları çok seviyorum ve onların mutluluğu benim için her şeyden önemli. Profesyonel bakım hizmetimle dostunuz emin ellerde. İhtiyaçlarınıza özel çözümler sunmak için buradayım, benimle iletişime geçmekten çekinmeyin.";
+        }
+
+        newBackers.add({
+            'name': s['userDisplayName'] ?? 'Kullanıcı',
+            'imagePath': image,
+            'suitability': s['serviceName'] ?? 'Hizmet',
+            'isFavorite': false,
+            'location': s['address'] ?? "İstanbul / Kadıköy",
+            'bio': bio,
+            'userId': s['userId'],
+            'fullData': s,
+        });
+      }
+
+      // Eğer API boş dönerse örnek verileri kullanmak isterseniz burayı uncomment yapabilirsiniz.
+      // Şimdilik sadece backend verisi gösteriyoruz.
+      if (services.isEmpty && _backers.isEmpty) {
+          // Fallback demo data logic removed requested by user implication
+          // But purely for robustness, if you want demo data:
+          /*
+          newBackers.addAll([
+            {
+              'name': 'Tanks Corner Gündüz Bakım',
+              ...
+            }
+          ]);
+          */
+      }
+
+      if (mounted) {
+        setState(() {
+          _backers = newBackers;
+          _isLoading = false;
+        });
+      }
+    } catch (e) {
+      debugPrint('Backers yükleme hatası: $e');
+      if (mounted) setState(() => _isLoading = false);
+    }
   }
 
   Future<void> _favorileriYukle() async {
@@ -45,67 +108,14 @@ class _BackersListScreenState extends State<BackersListScreen> {
     }
   }
 
-  // 🔹 Örnek Veri Listesi (Aynı Kaldı)
-  final List<Map<String, dynamic>> _backers = [
-    {
-      'name': 'Tanks Corner Gündüz Bakım',
-      'imagePath': 'assets/images/caregiver3.jpg',
-      'suitability': 'Köpekler',
-      'price': 45.00,
-      'isFavorite': false,
-    },
-    {
-      'name': 'İstanbul Pati Arkadaşı',
-      'imagePath': 'assets/images/caregiver1.png',
-      'suitability': 'Kediler',
-      'price': 30.50,
-      'isFavorite': true,
-    },
-    {
-      'name': 'Can dost Pansiyonu',
-      'imagePath': 'assets/images/caregiver2.jpeg',
-      'suitability': 'Tüm Hayvanlar',
-      'price': 65.00,
-      'isFavorite': false,
-    },
-    {
-      'name': 'Juliet Wan Gezdirme',
-      'imagePath': 'assets/images/caregiver1.png',
-      'suitability': 'Gezdirme',
-      'price': 35.00,
-      'isFavorite': true,
-    },
-    {
-      'name': 'Profesyonel Hayvan Bakımı',
-      'imagePath': 'assets/images/caregiver3.jpg',
-      'suitability': 'Gündüz Bakımı',
-      'price': 55.00,
-      'isFavorite': false,
-    },
-    {
-      'name': 'Pati Kafe & Pansiyon',
-      'imagePath': 'assets/images/caregiver2.jpeg',
-      'suitability': 'Pansiyon',
-      'price': 80.00,
-      'isFavorite': true,
-    },
-    {
-      'name': 'Kadıköy Evde Bakım',
-      'imagePath': 'assets/images/caregiver1.png',
-      'suitability': 'Evde Bakım',
-      'price': 40.00,
-      'isFavorite': false,
-    },
-    {
-      'name': 'Fıstık Aile Bakımı',
-      'imagePath': 'assets/images/caregiver3.jpg',
-      'suitability': 'Tüm Hayvanlar',
-      'price': 50.00,
-      'isFavorite': false,
-    },
+  /*
+  // 🔹 Örnek Veri Listesi (Devre Dışı Bırakıldı - Backend'den Geliyor)
+  final List<Map<String, dynamic>> _backers_old = [
+    { ... }
   ];
+  */
 
-  // 🔹 Profil sayfasına navigasyon işlevi (Aynı Kaldı)
+  // 🔹 Profil sayfasına navigasyon işlevi
   void _navigateToCaregiverProfile(int index) {
     final backer = _backers[index];
 
@@ -115,6 +125,8 @@ class _BackersListScreenState extends State<BackersListScreen> {
       MaterialPageRoute(
         builder: (context) => CaregiverProfilpage(
           // DİNAMİK VERİLER
+          caregiverId: backer['userId'] as int?,
+          caregiverData: backer['fullData'] as Map<String, dynamic>?,
           displayName: backer['name'] as String,
           userName: backer['name']
               .toString()
@@ -123,8 +135,8 @@ class _BackersListScreenState extends State<BackersListScreen> {
           userPhoto: backer['imagePath'] as String,
 
           // ZORUNLU SABİT/ÖRNEK VERİLER
-          location: "İstanbul / Kadıköy",
-          bio:
+          location: backer['location']?.toString() ?? "İstanbul / Kadıköy",
+          bio: backer['bio']?.toString() ??
               "7 yılı aşkın süredir evcil hayvan bakımı yapıyorum. Güvenli ve sevgi dolu bir ortam sağlarım.",
           userSkills: "Köpek Gezdirme, Kedi Pansiyonu",
           otherSkills: "İlk Yardım Sertifikası",
@@ -265,11 +277,20 @@ class _BackersListScreenState extends State<BackersListScreen> {
       ),
 
       // --- 2. Sayfa İçeriği ---
-      body: SingleChildScrollView(
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: <Widget>[
-            // 🔹 Bakıcı Listesi (Responsive GridView)
+      body: _isLoading
+          ? const Center(child: CircularProgressIndicator(color: _primaryColor))
+          : _backers.isEmpty
+              ? const Center(
+                  child: Text(
+                    "Henüz hizmet veren bakıcı bulunmamaktadır.",
+                    style: TextStyle(fontSize: 16, color: Colors.grey),
+                  ),
+                )
+              : SingleChildScrollView(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: <Widget>[
+                      // 🔹 Bakıcı Listesi (Responsive GridView)
             Padding(
               // Üstten de biraz boşluk eklendi
               padding: EdgeInsets.fromLTRB(
@@ -289,17 +310,14 @@ class _BackersListScreenState extends State<BackersListScreen> {
                   final backer = _backers[index];
                   final isFav = favoriIsimleri.contains(backer['name']);
 
-                  return GestureDetector(
+                  return CaregiverCardBalanced(
                     onTap: () => _navigateToCaregiverProfile(index),
-                    behavior: HitTestBehavior.opaque,
-                    child: CaregiverCardBalanced(
-                      name: backer['name'] as String,
-                      imagePath: backer['imagePath'] as String,
-                      suitability: backer['suitability'] as String,
-                      isFavorite: isFav,
-                      tip: "explore", // <-- Backend için ayrım
-                      onFavoriteChanged: _onFavoriteChanged,
-                    ),
+                    name: backer['name'] as String,
+                    imagePath: backer['imagePath'] as String,
+                    suitability: backer['suitability'] as String,
+                    isFavorite: isFav,
+                    tip: "explore", // <-- Backend için ayrım
+                    onFavoriteChanged: _onFavoriteChanged,
                   );
                 },
               ),

@@ -78,6 +78,26 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
     });
   }
 
+  void _showSuccessMessage() {
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text('Profil başarıyla güncellendi ✅'),
+        backgroundColor: Colors.green,
+        duration: Duration(seconds: 2),
+      ),
+    );
+  }
+
+  void _showWarningMessage() {
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text('Yerel kayıt başarılı fakat sunucu güncellenemedi ⚠️ İnternet bağlantınızı kontrol edin.'),
+        backgroundColor: Colors.orange,
+        duration: Duration(seconds: 4),
+      ),
+    );
+  }
+
   Future<void> _saveProfileData() async {
     final email = _emailController.text.trim();
     final phone = _phoneController.text.trim();
@@ -168,31 +188,34 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
             // Backend'deki PhotoUrl'i SharedPreferences'a da kaydet
             await prefs.setString('photoUrl', photoUrl);
             print('✅ Profil resmi backend\'e kaydedildi');
+            _showSuccessMessage();
           } else {
             print('⚠️ Profil resmi backend\'e kaydedilemedi');
+            _showWarningMessage();
           }
         } else {
           print('⚠️ Profil resmi boş, backend\'e gönderilmiyor');
+          _showSuccessMessage(); // Resim yoksa, sadece text kaydedildi varsay
         }
       }
     } else {
       // Sadece isim güncellendi, resim yok
       final userId = prefs.getInt('userId');
       if (userId != null) {
-        await _userService.updateUserProfile(
+        final success = await _userService.updateUserProfile(
           userId: userId,
           displayName: _usernameController.text.trim(),
         );
+        if (success) {
+           _showSuccessMessage();
+        } else {
+          _showWarningMessage();
+        }
+      } else {
+         _showSuccessMessage(); // Backend user yoksa local save OK
       }
     }
-
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text('Başarı ile kaydedildi'),
-        backgroundColor: Colors.green,
-        duration: Duration(seconds: 2),
-      ),
-    );
+    
     setState(() {});
 
     // Eğer chat ekranından gelindiyse, kaydetme sonrası otomatik olarak chat ekranına dön

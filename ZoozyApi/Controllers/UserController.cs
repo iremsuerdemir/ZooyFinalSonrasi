@@ -181,18 +181,17 @@ namespace ZoozyApi.Controllers
                 // Geçerli base64 string kontrolü
                 if (!string.IsNullOrWhiteSpace(trimmedPhotoUrl) && 
                     trimmedPhotoUrl.Length > 20 && // Minimum uzunluk kontrolü
-                    trimmedPhotoUrl.StartsWith("data:image"))
+                    trimmedPhotoUrl.StartsWith("data:image", StringComparison.OrdinalIgnoreCase))
                 {
                     user.PhotoUrl = trimmedPhotoUrl;
                     System.Diagnostics.Debug.WriteLine($"✅ PhotoUrl güncellendi: Uzunluk={user.PhotoUrl.Length}, İlk 50 karakter: {user.PhotoUrl.Substring(0, Math.Min(50, user.PhotoUrl.Length))}");
                 }
                 else
                 {
-                    // Geçersiz PhotoUrl gönderildi - log'la ve GÜNCELLEME
+                    // Geçersiz PhotoUrl gönderildi - log'la ama GÜNCELLEME (Eski resim kalsın veya null yapma)
                     var preview = trimmedPhotoUrl.Length > 50 ? trimmedPhotoUrl.Substring(0, 50) : trimmedPhotoUrl;
-                    System.Diagnostics.Debug.WriteLine($"⚠️ Geçersiz PhotoUrl gönderildi (boş veya geçersiz format): Uzunluk={trimmedPhotoUrl.Length}, İçerik='{preview}'");
-                    // Geçersizse NULL yap (boş string yerine)
-                    user.PhotoUrl = null;
+                    System.Diagnostics.Debug.WriteLine($"⚠️ Geçersiz PhotoUrl formatı: Uzunluk={trimmedPhotoUrl.Length}, İçerik='{preview}'");
+                    // user.PhotoUrl = null; // Eski hali: null yapıyordu. Yeni hali: dokunma.
                 }
             }
 

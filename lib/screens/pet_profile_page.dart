@@ -465,7 +465,8 @@ class _PetProfilePageState extends State<PetProfilePage> {
                                                 if (weight != null) {
                                                   try {
                                                     final prefs = await SharedPreferences.getInstance();
-                                                    final userId = prefs.getString("userId") ?? "";
+                                                    final storedId = prefs.get('userId');
+                                                    final userId = storedId?.toString() ?? "";
                                                     final result =
                                                       await _petProfileService
                                                         .createPet(

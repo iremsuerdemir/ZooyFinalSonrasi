@@ -103,7 +103,8 @@ public class PetProfilesController : ControllerBase
         _context.PetProfiles.Add(petProfile);
         await _context.SaveChangesAsync(cancellationToken);
 
-        return CreatedAtAction(nameof(GetByIdAsync), new { id = petProfile.Id }, petProfile);
+        // return CreatedAtAction(nameof(GetByIdAsync), new { id = petProfile.Id }, petProfile);
+        return StatusCode(201, petProfile);
     }
 
     /// <summary>

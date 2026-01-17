@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'dart:convert';
 import 'package:zoozy/models/favori_item.dart';
 import 'package:zoozy/services/guest_access_service.dart';
 import 'package:zoozy/services/favorite_service.dart';
@@ -7,8 +8,6 @@ class CaregiverCardAsset extends StatefulWidget {
   final String name;
   final String imagePath;
   final String suitability;
-  final double
-      price; // Veri modelinde durmaya devam ediyor, ancak gösterilmeyecek
   final bool isFavorite; // Dışarıdan favori durumunu al
   final VoidCallback? onFavoriteChanged; // Favori durumu değiştiğinde callback
 
@@ -17,7 +16,6 @@ class CaregiverCardAsset extends StatefulWidget {
     required this.name,
     required this.imagePath,
     required this.suitability,
-    required this.price,
     this.isFavorite = false,
     this.onFavoriteChanged,
   });
@@ -83,10 +81,21 @@ class _CaregiverCardAssetState extends State<CaregiverCardAsset> {
     // Kart yüksekliği responsive olarak ekran genişliğine göre ayarlanır.
     final double dynamicCardHeight = screenWidth * 0.60;
 
-    // Hem asset hem de network görselleri destekle
+    // Hem asset hem de network görselleri, ayrıca Base64 destekle
     ImageProvider imageProvider;
     if (widget.imagePath.startsWith('http')) {
       imageProvider = NetworkImage(widget.imagePath);
+    } else if (widget.imagePath.startsWith('data:image')) {
+      try {
+        // Base64 verisini çöz
+        final base64String = widget.imagePath.contains(',')
+            ? widget.imagePath.split(',').last
+            : widget.imagePath;
+        imageProvider = MemoryImage(base64Decode(base64String));
+      } catch (e) {
+        print('Base64 decode hatası: $e');
+        imageProvider = const AssetImage('assets/images/caregiver1.png');
+      }
     } else {
       imageProvider = AssetImage(widget.imagePath);
     }

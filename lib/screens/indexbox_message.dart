@@ -630,50 +630,70 @@ class _TaleplerEkraniState extends State<TaleplerEkrani> {
     }
   }
 
+  Future<void> _clearMessagesOnly(String username) async {
+    final prefs = await SharedPreferences.getInstance();
+    // history'yi silip cleared flag'i set et.
+    // Bu sayede loadStoredChat "isCleared"i görüp boş liste döner.
+    await prefs.remove('chat_history_$username');
+    await prefs.setBool('chat_cleared_$username', true);
+  }
+
   void _deleteChat(BuildContext context, _ChatPreview chat) async {
-    final bool? confirmed = await showDialog<bool>(
+    await showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: const Text('Mesajı Sil'),
-        content: Text(
-            '${chat.contactName} ile olan mesajı silmek istediğinizden emin misiniz?'),
+        title: const Text('Seçenekler'),
+        content: Text('${chat.contactName} için işlem seçiniz:'),
         actions: <Widget>[
           TextButton(
-            onPressed: () => Navigator.of(ctx).pop(false),
-            child: const Text('Hayır'),
+            onPressed: () {
+              Navigator.of(ctx).pop();
+              _performClearMessages(chat);
+            },
+            child: const Text('Mesajları Temizle'),
           ),
           TextButton(
-            onPressed: () => Navigator.of(ctx).pop(true),
-            child: const Text('Evet', style: TextStyle(color: Colors.red)),
+            onPressed: () {
+              Navigator.of(ctx).pop();
+              _performDeleteChat(chat);
+            },
+            child:
+                const Text('Sohbeti Sil', style: TextStyle(color: Colors.red)),
+          ),
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(),
+            child: const Text('İptal', style: TextStyle(color: Colors.grey)),
           ),
         ],
       ),
     );
+  }
 
-    if (confirmed == true) {
-      // Silme işaretini kaydet
-      await _markChatAsDeleted(
-          chat.contactUsername, chat.jobId, chat.jobUserId);
+  void _performClearMessages(_ChatPreview chat) async {
+    await _clearMessagesOnly(chat.contactUsername);
+    if (mounted) setState(() {});
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text('Mesajlar temizlendi'), duration: Duration(seconds: 1)),
+    );
+  }
 
-      // UI'dan kaldır - hem contactUsername hem de jobId+contactUserId kombinasyonuna göre sil
-      if (mounted) {
-        setState(() {
-          _chats.removeWhere((c) {
-            // Aynı kişi ve aynı job için conversation'ı sil
-            return (c.contactUsername == chat.contactUsername &&
-                    c.jobId == chat.jobId &&
-                    c.jobUserId == chat.jobUserId) ||
-                // Veya aynı contactUserId'ye sahip tüm conversation'ları sil (eğer jobId null ise)
-                (c.jobUserId == chat.jobUserId && chat.jobId == null);
-          });
+  void _performDeleteChat(_ChatPreview chat) async {
+    // Silme işaretini kaydet
+    await _markChatAsDeleted(chat.contactUsername, chat.jobId, chat.jobUserId);
+
+    // UI'dan kaldır
+    if (mounted) {
+      setState(() {
+        _chats.removeWhere((c) {
+          return (c.contactUsername == chat.contactUsername &&
+                  c.jobId == chat.jobId &&
+                  c.jobUserId == chat.jobUserId) ||
+              (c.jobUserId == chat.jobUserId && chat.jobId == null);
         });
-        if (_chats.isEmpty) {
-          widget.onToggleEditMode();
-        }
+      });
+      if (_chats.isEmpty) {
+        widget.onToggleEditMode();
       }
-
-      // Backend'den tekrar yükle (silinen conversation'lar filtrelenecek)
-      await _loadConversations();
     }
   }
 
@@ -752,12 +772,21 @@ class _TaleplerEkraniState extends State<TaleplerEkrani> {
         }
 
         final messages = data.messages;
-        // Son mesajın içeriğini göster (lastMessagePreview kullan)
-        final previewText = chat.lastMessagePreview.isNotEmpty
-            ? chat.lastMessagePreview.replaceAll('\n', ' ')
-            : (messages.isNotEmpty
-                ? messages.last.text.replaceAll('\n', ' ')
-                : '');
+        // Son mesajın içeriğini göster
+        String previewText;
+        if (data.isLocal) {
+          // Yerel değişiklik varsa (temizleme dahil), yerel mesajları kullan
+          previewText = messages.isNotEmpty
+              ? messages.last.text.replaceAll('\n', ' ')
+              : ''; // Temizlendi veya boş
+        } else {
+          // Yoksa backend verisini kullan
+          previewText = chat.lastMessagePreview.isNotEmpty
+              ? chat.lastMessagePreview.replaceAll('\n', ' ')
+              : (messages.isNotEmpty
+                  ? messages.last.text.replaceAll('\n', ' ')
+                  : '');
+        }
 
         return Card(
           elevation: 0,
@@ -873,26 +902,44 @@ class _TaleplerEkraniState extends State<TaleplerEkrani> {
     final prefs = await SharedPreferences.getInstance();
     final historyKey = 'chat_history_${chat.contactUsername}';
     final deletedKey = 'chat_deleted_${chat.contactUsername}';
+    final clearedKey = 'chat_cleared_${chat.contactUsername}';
+
     final rawHistory = prefs.getString(historyKey);
     final isDeleted = prefs.getBool(deletedKey) ?? false;
+    final isCleared = prefs.getBool(clearedKey) ?? false;
 
+    // 1. Durum: Sohbet tamamen silinmiş
+    if (isDeleted) {
+      return const _StoredChatData(messages: [], isDeleted: true);
+    }
+
+    // 2. Durum: Yerel geçmiş var (Cleared'dan daha öncelikli, çünkü yeni mesaj gelmiş olabilir)
     if (rawHistory != null) {
+      // Boş liste kontrolü
+      if (rawHistory == '[]') {
+        return _StoredChatData(
+            messages: [], isDeleted: false, isLocal: true);
+      }
       try {
         final List<dynamic> decoded = jsonDecode(rawHistory) as List<dynamic>;
         final messages = decoded
             .map((e) => ChatMessage.fromJson(
                 Map<String, dynamic>.from(e as Map<dynamic, dynamic>)))
             .toList();
-        return _StoredChatData(messages: messages, isDeleted: isDeleted);
+        return _StoredChatData(
+            messages: messages, isDeleted: false, isLocal: true);
       } catch (_) {
-        // fallback to provided messages
+        // Parse hatası olursa aşağı devam et
       }
     }
 
-    if (isDeleted) {
-      return const _StoredChatData(messages: [], isDeleted: true);
+    // 3. Durum: Sohbet temizlenmiş (Yerel geçmiş yok ama temizle flag'i var)
+    if (isCleared) {
+      // Backend verisini ezmek için isLocal=true ve boş mesaj dönüyoruz
+      return const _StoredChatData(messages: [], isDeleted: false, isLocal: true);
     }
 
+    // 4. Durum: Hiçbir yerel kayıt yok, backend verisini kullan
     return _StoredChatData(messages: chat.messages, isDeleted: false);
   }
 
@@ -937,10 +984,12 @@ class _ChatPreview {
 class _StoredChatData {
   final List<ChatMessage> messages;
   final bool isDeleted;
+  final bool isLocal;
 
   const _StoredChatData({
     required this.messages,
     required this.isDeleted,
+    this.isLocal = false,
   });
 }
 

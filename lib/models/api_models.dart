@@ -34,19 +34,19 @@ class PetProfileModel {
   factory PetProfileModel.fromJson(Map<String, dynamic> json) =>
       PetProfileModel(
         id: json['id']?.toString() ?? '',
-        firebaseId: json['firebaseId'] as String? ?? '',
-        name: json['name'] as String? ?? '',
-        species: json['species'] as String? ?? '',
-        breed: json['breed'] as String?,
-        age: json['age'] as int?,
-        vaccinationStatus: json['vaccinationStatus'] as String?,
-        healthNotes: json['healthNotes'] as String?,
-        ownerName: json['ownerName'] as String? ?? '',
-        ownerContact: json['ownerContact'] as String? ?? '',
-        userId: json['userId'] as int? ?? 0,
-        createdAt: DateTime.tryParse(json['createdAt'] as String? ?? '') ??
+        firebaseId: json['firebaseId']?.toString() ?? '',
+        name: json['name']?.toString() ?? '',
+        species: json['species']?.toString() ?? '',
+        breed: json['breed']?.toString(),
+        age: json['age'] is int ? json['age'] : int.tryParse(json['age']?.toString() ?? ''),
+        vaccinationStatus: json['vaccinationStatus']?.toString(),
+        healthNotes: json['healthNotes']?.toString(),
+        ownerName: json['ownerName']?.toString() ?? '',
+        ownerContact: json['ownerContact']?.toString() ?? '',
+        userId: json['userId'] is int ? json['userId'] : int.tryParse(json['userId']?.toString() ?? '') ?? 0,
+        createdAt: DateTime.tryParse(json['createdAt']?.toString() ?? '') ??
             DateTime.now().toUtc(),
-        updatedAt: DateTime.tryParse(json['updatedAt'] as String? ?? '') ??
+        updatedAt: DateTime.tryParse(json['updatedAt']?.toString() ?? '') ??
             DateTime.now().toUtc(),
       );
 }

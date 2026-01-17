@@ -42,7 +42,30 @@ class UserServiceApi {
       }
       return [];
     } catch (e) {
-      print('Servis yükleme hatası: $e');
+      // debugPrint('Servis yükleme hatası: $e');
+      return [];
+    }
+  }
+
+  /// Get services from other users
+  Future<List<Map<String, dynamic>>> getOtherUsersServices() async {
+    try {
+      final userId = await _getCurrentUserId();
+      final url = userId != null
+          ? '$baseUrl/others?excludeUserId=$userId'
+          : '$baseUrl/others?excludeUserId=0';
+
+      final response = await httpClient
+          .get(Uri.parse(url))
+          .timeout(const Duration(seconds: 10));
+
+      if (response.statusCode == 200) {
+        final List<dynamic> data = jsonDecode(response.body);
+        return List<Map<String, dynamic>>.from(data);
+      }
+      return [];
+    } catch (e) {
+      print('Diğer kullanıcı servisleri yükleme hatası: $e');
       return [];
     }
   }
@@ -88,43 +111,6 @@ class UserServiceApi {
     } catch (e) {
       print('Servis silme hatası: $e');
       return false;
-    }
-  }
-
-  /// Get all services from other users (excluding current user)
-  /// JobsScreen için kullanılır
-  Future<List<Map<String, dynamic>>> getOtherUsersServices() async {
-    try {
-      final userId = await _getCurrentUserId();
-      if (userId == null) {
-        return [];
-      }
-
-      final response = await httpClient
-          .get(Uri.parse('$baseUrl/others?excludeUserId=$userId'))
-          .timeout(const Duration(seconds: 10));
-
-      if (response.statusCode == 200) {
-        final List<dynamic> data = jsonDecode(response.body);
-        return data.map((json) => {
-              'id': json['id'],
-              'userId': json['userId'],
-              'serviceName': json['serviceName'] ?? '',
-              'serviceIcon': json['serviceIcon'],
-              'price': json['price'],
-              'description': json['description'],
-              'address': json['address'] ?? '',
-              'createdAt': json['createdAt'],
-              // Kullanıcı bilgileri
-              'userDisplayName': json['userDisplayName'] ?? '',
-              'userEmail': json['userEmail'] ?? '',
-              'userPhotoUrl': json['userPhotoUrl'],
-            }).toList();
-      }
-      return [];
-    } catch (e) {
-      print('Diğer kullanıcı servisleri yükleme hatası: $e');
-      return [];
     }
   }
 }

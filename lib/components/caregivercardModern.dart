@@ -16,6 +16,7 @@ class CaregiverCardBalanced extends StatefulWidget {
   final bool isFavorite;
   final VoidCallback? onFavoriteChanged;
   final String tip; // "caregiver" veya "explore"
+  final VoidCallback? onTap; // Kart tıklama eventi
 
   const CaregiverCardBalanced({
     super.key,
@@ -25,6 +26,7 @@ class CaregiverCardBalanced extends StatefulWidget {
     this.isFavorite = false,
     this.onFavoriteChanged,
     this.tip = "caregiver", // Varsayılan değer
+    this.onTap,
   });
 
   @override
@@ -33,6 +35,44 @@ class CaregiverCardBalanced extends StatefulWidget {
 
 class _CaregiverCardBalancedState extends State<CaregiverCardBalanced> {
   final FavoriteService _favoriteService = FavoriteService();
+
+  ImageProvider _getImageProvider(String path) {
+    if (path.isEmpty || path == 'null') { // Boşsa veya string olarak null gelirse placeholder dön
+       return const AssetImage('assets/images/caregiver1.png');
+    }
+
+    if (path.startsWith('http')) {
+      return NetworkImage(path);
+    } else if (path.startsWith('assets/')) { // Zaten asset ise direkt döndür
+      return AssetImage(path);
+    } // Eğer bir dosya yolu ise (C:\.... veya /data/...) ve local dosya ise
+      else if (path.contains('/') || path.contains('\\')) {
+       // Web'de dosya sistemi çalışmaz ancak mobil için FileImage kullanılabilir.
+       // Güvenli olması adına base64 kontrolünü sona saklayıp,
+       // Eğer path çok uzunsa (muhtemelen base64) base64 dene, değilse dosya san
+       if (path.length > 255 && !path.contains('\n')) {
+          try {
+            return MemoryImage(base64Decode(path));
+          } catch (_) {
+             return const AssetImage('assets/images/caregiver1.png');
+          }
+       }
+       // Eğer dosya yolu ise (local path), File class'ı gerekir.
+       // Şimdilik asset fallback'i veriyoruz çünkü File import'u yoksa hata alabiliriz.
+       // Ancak gelişmiş kullanımda 'dart:io' import edilip File(path) kullanılmalıdır.
+       // Projenizdeki resim yolları lokal disk yolu gösterdiği için (C:\Users...)
+       // bu resimler emülatör/cihaz içinden erişilemez (sadece o bilgisayarda var).
+       // Bu yüzden varsayılan bir görsel göstermek en doğrusu olacaktır.
+       return const AssetImage('assets/images/caregiver1.png'); 
+    } else {
+      try {
+        // Base64 decoding
+        return MemoryImage(base64Decode(path));
+      } catch (_) {
+        return const AssetImage('assets/images/caregiver1.png');
+      }
+    }
+  }
 
   Future<void> _toggleFavorite() async {
     if (!await GuestAccessService.ensureLoggedIn(context)) {
@@ -110,7 +150,7 @@ class _CaregiverCardBalancedState extends State<CaregiverCardBalanced> {
       child: ClipRRect(
         borderRadius: BorderRadius.circular(20),
         child: InkWell(
-          onTap: () {},
+          onTap: widget.onTap,
           child: SizedBox( // Column'ı belirli bir boyutlandırma içine alıyoruz
             height: 250, // Sabit bir yükseklik veya başka bir kısıtlama
             child: Column(
@@ -127,7 +167,7 @@ class _CaregiverCardBalancedState extends State<CaregiverCardBalanced> {
                         curve: Curves.easeOut,
                         decoration: BoxDecoration(
                           image: DecorationImage(
-                            image: AssetImage(widget.imagePath),
+                            image: _getImageProvider(widget.imagePath),
                             fit: BoxFit.cover,
                           ),
                         ),

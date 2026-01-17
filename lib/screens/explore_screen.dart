@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:zoozy/components/CaregiverCard.dart';
+import 'package:zoozy/components/caregivercardModern.dart'; // Modern fiyatsız kart
 import 'package:zoozy/components/SimplePetCard.dart';
 import 'package:zoozy/components/bottom_navigation_bar.dart';
 import 'package:zoozy/screens/backers_list_screen.dart';
@@ -9,6 +9,7 @@ import 'package:zoozy/screens/caregiverProfilPage.dart';
 import 'package:zoozy/screens/favori_page.dart';
 import 'package:zoozy/services/favorite_service.dart';
 import 'package:zoozy/components/explore_slider.dart';
+import 'package:zoozy/services/user_service_api.dart'; // Backend Servisi
 
 // BackersNearbyScreen'in dışarıdan import edildiği varsayılmıştır
 import 'package:zoozy/screens/login_page.dart';
@@ -28,6 +29,62 @@ class ExploreScreen extends StatefulWidget {
 class _ExploreScreenState extends State<ExploreScreen> {
   int selectedCategoryIndex = -1;
   Set<String> favoriIsimleri = {};
+  List<Map<String, dynamic>> _caregivers = [];
+  bool _isLoading = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadAllData();
+  }
+
+  Future<void> _loadAllData() async {
+    await _favorileriYukle();
+    await _loadCaregivers();
+  }
+
+  Future<void> _loadCaregivers() async {
+    try {
+      final api = UserServiceApi();
+      final services = await api.getOtherUsersServices();
+
+      List<Map<String, dynamic>> newCaregivers = [];
+      for (var s in services) {
+        String image = s['userPhotoUrl'] ?? 'assets/images/caregiver1.png';
+        if (image.isEmpty) image = 'assets/images/user_placeholder.png';
+
+        String bio = s['description'] ?? "";
+        if (bio.isEmpty) {
+          bio = "Merhaba! Ben hayvanları çok seviyorum ve onların mutluluğu benim için her şeyden önemli. Profesyonel bakım hizmetimle dostunuz emin ellerde. İhtiyaçlarınıza özel çözümler sunmak için buradayım, benimle iletişime geçmekten çekinmeyin.";
+        }
+
+        newCaregivers.add({
+          "name": s['userDisplayName'] ?? 'Kullanıcı',
+          "image": image,
+          "suitability": s['serviceName'] ?? 'Hizmet',
+          "location": s['address'] ?? "İstanbul / Kadıköy",
+          "bio": bio,
+          "followers": 100, // Örnek veri
+          "following": 25,  // Örnek veri
+          "reviews": [],    // Örnek veri
+          "moments": [],    // Örnek veri
+          "userId": s['userId'], // ID eklendi
+          "fullData": s,
+        });
+      }
+
+      if (mounted) {
+        setState(() {
+          _caregivers = newCaregivers;
+          _isLoading = false;
+        });
+      }
+    } catch (e) {
+      debugPrint('Caregivers backend hata: $e');
+      if (mounted) setState(() => _isLoading = false);
+    }
+  }
+
   Future<void> _logout() async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.clear(); // Oturum bilgilerini temizler
@@ -39,37 +96,42 @@ class _ExploreScreenState extends State<ExploreScreen> {
     );
   }
 
-  final caregivers = [
-    {
-      "name": "İstanbul, Juliet Wan",
-      "image": "assets/images/caregiver1.png",
-      "suitability": "Gezdirme",
-      "price": 315.0
-    },
-    {
-      "name": "Emy Pansiyon",
-      "image": "assets/images/caregiver2.jpeg",
-      "suitability": "Pansiyon",
-      "price": 1600.0
-    },
-    {
-      "name": "Animal Care Pro",
-      "image": "assets/images/caregiver3.jpg",
-      "suitability": "Gündüz Bakımı",
-      "price": 1175.0
-    },
-  ];
-
-  final pets = [
-    {"image": "assets/images/pet1.jpeg", "name": "Buddy", "owner": "Alice"},
-    {"image": "assets/images/pet2.jpeg", "name": "Charlie", "owner": "Bob"},
-    {"image": "assets/images/pet3.jpg", "name": "Max", "owner": "Carol"},
-  ];
-
-  @override
-  void initState() {
-    super.initState();
-    _favorileriYukle();
+  // Caregiver Profil Sayfasına yönlendirme işlevi
+  void _navigateToCaregiverProfile(int index) {
+    // Backend verisi
+    final data = _caregivers[index];
+    
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => CaregiverProfilpage(
+          caregiverId: data["userId"] as int?,
+          caregiverData: data["fullData"] as Map<String, dynamic>?,
+          displayName: data["name"],
+          userName: (data["name"] as String).toLowerCase().replaceAll(RegExp(r'[^\w]+'), '_'),
+          location: data["location"] ?? "İstanbul/Kadıköy",
+          bio: data["bio"] ?? "...",
+          userPhoto: data["image"],
+          userSkills: data["suitability"],
+          otherSkills: "İlk Yardım, Temel Eğitim",
+          followers: data["followers"] as int? ?? 50,
+          following: data["following"] as int? ?? 20,
+           moments: const [
+            {
+              'userName': '@tankscornermoments',
+              'displayName': 'Anlar',
+              'userPhoto': 'assets/images/cat1.jpg',
+              'postImage': 'assets/images/cat1.jpg',
+              'description': 'Harika zaman geçiriyoruz...',
+              'likes': 10,
+              'comments': 5,
+              'timePosted': '2023-01-01T12:00:00Z'
+            }
+          ],
+          reviews: const [], // Şimdilik boş liste
+        ),
+      ),
+    );
   }
 
   /// Backend'den favori bakıcı isimlerini yükler.
@@ -102,49 +164,6 @@ class _ExploreScreenState extends State<ExploreScreen> {
     );
   }
 
-  // Caregiver Profil Sayfasına göndermek için örnek veri üretir.
-  Map<String, dynamic> _fetchCaregiverData(int index) {
-    final caregiver = caregivers[index];
-    final String name = caregiver["name"] as String;
-    final String imagePath = caregiver["image"] as String;
-
-    return {
-      "displayName": name,
-      "userName": name.toLowerCase().replaceAll(RegExp(r'[^\w]+'), '_'),
-      "location": "İstanbul/Kadıköy",
-      "bio": "Hayvan dostlarımıza sevgiyle bakıyoruz!",
-      "userPhoto": imagePath,
-      "userSkills": caregiver["suitability"],
-      "otherSkills": "Oyun Zamanı, İlk Yardım",
-      "moments": List<Map<String, dynamic>>.empty(),
-      "reviews": List<Map<String, dynamic>>.empty(),
-      "followers": 50 + index * 10,
-      "following": 20,
-    };
-  }
-
-  // Caregiver Profil Sayfasına yönlendirme işlevi
-  void _navigateToCaregiverProfile(int index) {
-    final data = _fetchCaregiverData(index);
-    Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (context) => CaregiverProfilpage(
-          displayName: data["displayName"],
-          userName: data["userName"],
-          location: data["location"],
-          bio: data["bio"],
-          userPhoto: data["userPhoto"],
-          userSkills: data["userSkills"],
-          otherSkills: data["otherSkills"],
-          moments: data["moments"] as List<Map<String, dynamic>>,
-          reviews: data["reviews"] as List<Map<String, dynamic>>,
-          followers: data["followers"] as int,
-          following: data["following"] as int,
-        ),
-      ),
-    );
-  }
 
   @override
   Widget build(BuildContext context) {
@@ -373,32 +392,33 @@ class _ExploreScreenState extends State<ExploreScreen> {
             // --- CAREGIVER KARTLARI (Yatay Kaydırma) ---
             SizedBox(
               height:
-                  screenWidth * 0.6, // Yüksekliği ekran genişliğine göre ayarla
-              child: ListView.builder(
+                  screenWidth * 0.62, // Yüksekliği biraz artırdık
+              child: _isLoading 
+                ? const Center(child: CircularProgressIndicator()) 
+                : _caregivers.isEmpty 
+                  ? const Center(child: Text("Yakınınızda hizmet veren bulunamadı.")) 
+                  : ListView.builder(
                 scrollDirection: Axis.horizontal,
-                itemCount: caregivers.length,
+                itemCount: _caregivers.length,
                 itemBuilder: (context, index) {
-                  final c = caregivers[index];
+                  final c = _caregivers[index];
                   final isFav = favoriIsimleri.contains(c["name"]);
                   return Padding(
                     padding: const EdgeInsets.only(right: 12),
                     child: SizedBox(
                       width: screenWidth * 0.45, // Kart genişliğini ayarla
-                      child: GestureDetector(
+                      child: CaregiverCardBalanced(
                         onTap: () => _navigateToCaregiverProfile(index),
-                        behavior: HitTestBehavior.opaque,
-                        child: CaregiverCardAsset(
-                          name: c["name"] as String,
-                          imagePath: c["image"] as String,
-                          suitability: c["suitability"] as String,
-                          price: c["price"] as double,
-                          isFavorite: isFav,
+                        name: c["name"] as String,
+                        imagePath: c["image"] as String,
+                        suitability: c["suitability"] as String,
+                        isFavorite: isFav,
+                          tip: "explore", // Explore sayfası için özel tip
                           onFavoriteChanged: () {
                             _favorileriYukle();
                           },
                         ),
                       ),
-                    ),
                   );
                 },
               ),

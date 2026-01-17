@@ -268,7 +268,7 @@ class _BackersNearbyScreenState extends State<BackersNearbyScreen> {
                         name: backer['name'] as String,
                         imagePath: backer['imagePath'] as String,
                         suitability: backer['suitability'] as String,
-                        price: backer['price'] as double,
+                        //price: backer['price'] as double,
                         isFavorite: backer['isFavorite'] as bool,
                         onFavoriteChanged: () => _updateFavoriteStatus(index),
                       ),
