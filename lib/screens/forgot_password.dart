@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:zoozy/screens/reset_password_confirm_screen.dart';
 import 'package:zoozy/services/auth_service.dart';
 
-// --- Sabit Renkler ---
+// --- ForgotPassword Widget (Kullanıcının sağladığı kod) ---
 const Color kAnaMor = Color(0xFF8C60A8);
 const Color kAcikMor = Color(0xFFF0EAF5);
 const Color kKoyuYazi = Color(0xFF4C4C4C);
@@ -114,29 +115,27 @@ class _ForgotPasswordState extends State<ForgotPassword> {
       if (!mounted) return;
 
       if (response.success) {
-        // Başarılı olduğunda dialog göster
-        showDialog(
-          context: context,
-          barrierDismissible: false,
-          builder: (BuildContext context) {
-            return AlertDialog(
-              title: const Text('Şifre Sıfırlama'),
-              content: Text(
-                response.message.isEmpty
-                    ? 'Yeni şifreniz e-posta adresinize gönderilmiştir.\n\nLütfen gelen kutunuzu kontrol edin.'
-                    : response.message,
-              ),
-              actions: [
-                TextButton(
-                  onPressed: () {
-                    Navigator.pop(context); // Dialog kapat
-                    Navigator.pop(context); // Forgot Password sayfasından çık
-                  },
-                  child: const Text('Tamam'),
-                ),
-              ],
-            );
-          },
+        // Başarılı olduğunda kullanıcıyı DOĞRULAMA KODU GİRME ekranına yönlendir
+        if (!mounted) return;
+
+        // Backend'den gelen mesajı göster
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(response.message.isNotEmpty 
+                ? response.message 
+                : "Doğrulama kodu e-postanıza gönderildi."),
+            backgroundColor: Colors.green,
+            duration: const Duration(seconds: 4), 
+          ),
+        );
+
+        // Parametre olarak boş token gönderiyoruz, 
+        // böylece ekran manuel kod girişini aktif edecek.
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(
+            builder: (context) => const ResetPasswordConfirmScreen(token: ""), // Boş token = Manuel Giriş Modu
+          ),
         );
       } else {
         // Hata mesajını göster

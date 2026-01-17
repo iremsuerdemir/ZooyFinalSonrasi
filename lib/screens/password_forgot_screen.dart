@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:zoozy/screens/settings_screen.dart';
 import 'package:zoozy/services/auth_service.dart';
+import 'package:zoozy/screens/reset_password_confirm_screen.dart';
 
 class PasswordForgotScreen extends StatefulWidget {
   const PasswordForgotScreen({super.key});
@@ -46,7 +47,7 @@ class _PasswordForgotScreenState extends State<PasswordForgotScreen> {
           SnackBar(
             content: Text(response.message.isNotEmpty 
                 ? response.message 
-                : "Yeni şifreniz e-posta adresinize gönderildi."),
+                : "Doğrulama kodu e-posta adresinize gönderildi."),
             backgroundColor: Colors.green,
             behavior: SnackBarBehavior.floating,
             margin: const EdgeInsets.all(16),
@@ -54,7 +55,12 @@ class _PasswordForgotScreenState extends State<PasswordForgotScreen> {
           ),
         );
 
-        Navigator.pop(context);
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => const ResetPasswordConfirmScreen(token: ""),
+          ),
+        );
       } else {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(

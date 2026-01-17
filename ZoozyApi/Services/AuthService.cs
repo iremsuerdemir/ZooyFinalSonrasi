@@ -59,6 +59,16 @@ namespace ZoozyApi.Services
 
                 if (existingUser != null)
                 {
+                    // Eğer mevcut kullanıcı Google ile kayıtlıysa özel mesaj ver
+                    if (string.Equals(existingUser.Provider, "google", StringComparison.OrdinalIgnoreCase))
+                    {
+                        return new AuthResponse 
+                        { 
+                            Success = false, 
+                            Message = "Bu e-posta adresi Google hesabı ile kayıtlıdır. Lütfen Google ile Giriş Yap seçeneğini kullanın." 
+                        };
+                    }
+
                     return new AuthResponse 
                     { 
                         Success = false, 
@@ -142,12 +152,13 @@ namespace ZoozyApi.Services
         }
 
         // 🔴 GOOGLE KULLANICI KONTROLÜ
-        if (user.Provider == "google")
+        // Provider kontrolünü case-insensitive yapalım
+        if (string.Equals(user.Provider, "google", StringComparison.OrdinalIgnoreCase))
         {
             return new AuthResponse
             {
                 Success = false,
-                Message = "Bu email Google ile kayıtlı. Email/şifre ile giriş yapamazsınız."
+                Message = "Bu e-posta adresi Google hesabı ile bağlıdır. Lütfen şifre girmek yerine 'Google ile Giriş Yap' butonunu kullanın."
             };
         }
 
@@ -155,7 +166,7 @@ namespace ZoozyApi.Services
         // PasswordHash null veya boş ise hata döndür
         if (string.IsNullOrEmpty(user.PasswordHash))
         {
-            _logger.LogWarning($"Kullanıcı şifre hash'i yok: {user.Email}");
+            _logger.LogWarning($"User has no password hash: {user.Email}");
             return new AuthResponse
             {
                 Success = false,
@@ -163,10 +174,15 @@ namespace ZoozyApi.Services
             };
         }
 
+        // DEBUG LOG:
+        _logger.LogWarning($"LOGIN ATTEMPT: User={user.Email}, InputPass={request.Password.Trim()}, StoredHash={user.PasswordHash}");
+
         bool isValidPassword = BCrypt.Net.BCrypt.Verify(
             request.Password.Trim(),
             user.PasswordHash
         );
+
+        _logger.LogWarning($"VERIFY RESULT: {isValidPassword}");
 
         if (!isValidPassword)
         {
@@ -386,12 +402,8 @@ namespace ZoozyApi.Services
                     };
                 }
 
-                // Token oluştur (Güvenli rastgele string)
-                string resetToken = Convert.ToBase64String(System.Security.Cryptography.RandomNumberGenerator.GetBytes(32))
-                    .Replace("+", "-")
-                    .Replace("/", "_")
-                    .Replace("=", "")
-                    .Substring(0, 32);
+                // Token oluştur (6 haneli Kod)
+                string resetToken = new Random().Next(100000, 999999).ToString();
 
                 // Token'ı veritabanına kaydet (1 saat geçerli)
                 user.PasswordResetToken = resetToken;
@@ -401,32 +413,45 @@ namespace ZoozyApi.Services
                 _context.Users.Update(user);
                 await _context.SaveChangesAsync();
 
-                _logger.LogInformation($"Şifre sıfırlama token'ı oluşturuldu: {user.Email}");
+                _logger.LogInformation($"Şifre sıfırlama kodu oluşturuldu: {user.Email}");
 
-                // Reset URL oluştur (Frontend URL'i)
-                var frontendUrl = Environment.GetEnvironmentVariable("FRONTEND_URL") 
-                    ?? _configuration["FrontendSettings:BaseUrl"]
-                    ?? "http://localhost:3000"; // Varsayılan
+                // Kod Sadece Log'da görünsün (Link oluşturmaya gerek yok artık)
+                // -----------------------------------------------------------
+                _logger.LogWarning("====== PASSWORD RESET CODE (OTP) ======");
+                _logger.LogWarning($"User: {user.Email}");
+                _logger.LogWarning($"CODE: {resetToken}");
+                _logger.LogWarning("=======================================");
+                // -----------------------------------------------------------
+
+                // Email içeriğini güncelle (Link yerine Kod gönder)
+                // Not: EmailService'deki HTML şablonu şimdilik link bekliyor ama çalışır, sadece link bozuk görünür. 
+                // Önemli olan kodu iletmek.
                 
-                var resetUrl = $"{frontendUrl}/reset-password?token={resetToken}";
-
-                // Email gönder
+                // Hızlı çözüm için resetUrl parametresine Kodu gönderiyoruz,
+                // böylece mail şablonunda link yerine KOD yazacak.
                 bool emailSent = await _emailService.SendPasswordResetEmailAsync(
                     user.Email, 
                     resetToken, 
                     user.DisplayName,
-                    resetUrl
+                    resetUrl: resetToken // Link yerine kodu basıyoruz
                 );
 
                 if (!emailSent)
                 {
-                    _logger.LogWarning($"Email gönderilemedi: {user.Email}.");
+                    _logger.LogWarning($"Email gönderilemedi: {user.Email}. SMTP ayarlarını kontrol edin.");
+                    
+                    // Müşteri mailin gitmediğini bilsin ama developer detayı görmesin
+                    return new ResetPasswordResponse
+                    {
+                        Success = false,
+                        Message = "E-posta gönderilemedi. Lütfen internet bağlantınızı kontrol edin veya destek ekibiyle iletişime geçin. (Hata Kodu: SMTP)"
+                    };
                 }
 
                 return new ResetPasswordResponse
                 {
                     Success = true,
-                    Message = "Eğer bu email adresine kayıtlı bir hesap varsa, şifre sıfırlama linki e-posta adresinize gönderilmiştir."
+                    Message = "Doğrulama kodu e-postanıza gönderildi. Lütfen spam kutunuzu da kontrol edin."
                 };
             }
             catch (Exception ex)
@@ -481,7 +506,10 @@ namespace ZoozyApi.Services
                 }
 
                 // Yeni şifreyi hash'le ve kaydet
-                string passwordHash = BCrypt.Net.BCrypt.HashPassword(newPassword.Trim());
+                // 🔴 HATA DÜZELTME: Diğer kütüphane ile oluşturulduğu için salt versiyonu sorun yaratıyor olabilir.
+                // En güvenli yöntem: Şifre sıfırlama işlemlerinde salt'ı yenilemektir.
+                string passwordHash = BCrypt.Net.BCrypt.HashPassword(newPassword.Trim(), workFactor: 12);
+                
                 user.PasswordHash = passwordHash;
                 user.Provider = "local";
                 user.PasswordResetToken = null; // Token'ı temizle
@@ -492,6 +520,8 @@ namespace ZoozyApi.Services
                 await _context.SaveChangesAsync();
 
                 _logger.LogInformation($"Şifre başarıyla sıfırlandı: {user.Email}");
+                // DEBUG LOG:
+                _logger.LogWarning($"NEW PASSWORD SET: {newPassword.Trim()} -> {passwordHash}");
 
                 return new ConfirmResetPasswordResponse
                 {

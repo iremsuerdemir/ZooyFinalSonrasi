@@ -38,6 +38,8 @@ import 'package:zoozy/screens/walk_count_page.dart';
 import 'package:zoozy/screens/explore_screen.dart';
 import 'package:zoozy/screens/confirm_phone_screen.dart';
 import 'package:provider/provider.dart';
+import 'package:app_links/app_links.dart';
+import 'dart:async';
 
 //   GoogleSignIn
 final GoogleSignIn googleSignIn = GoogleSignIn(
@@ -45,6 +47,8 @@ final GoogleSignIn googleSignIn = GoogleSignIn(
       "301880499217-ke43kqtvdpue274f5d4lmjnbbt0enorg.apps.googleusercontent.com",
   scopes: ['email'],
 );
+
+final GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -89,12 +93,91 @@ Future<void> main() async {
   );
 }
 
-class MyApp extends StatelessWidget {
+class MyApp extends StatefulWidget {
   const MyApp({super.key});
+
+  @override
+  State<MyApp> createState() => _MyAppState();
+}
+
+class _MyAppState extends State<MyApp> {
+  late AppLinks _appLinks;
+  StreamSubscription<Uri>? _linkSubscription;
+
+  @override
+  void initState() {
+    super.initState();
+    _initDeepLinks();
+  }
+
+  @override
+  void dispose() {
+    _linkSubscription?.cancel();
+    super.dispose();
+  }
+
+  Future<void> _initDeepLinks() async {
+    _appLinks = AppLinks();
+
+    // Check initial link
+    try {
+      final Uri? initialLink = await _appLinks.getInitialAppLink();
+      if (initialLink != null) {
+        _handleDeepLink(initialLink);
+      }
+    } catch (e) {
+      log('Initial link error: $e');
+    }
+
+    // Listen to link stream
+    _linkSubscription = _appLinks.uriLinkStream.listen((uri) {
+      _handleDeepLink(uri);
+    });
+  }
+
+  void _handleDeepLink(Uri uri) {
+    log('DeepLink received: $uri'); // Debug log
+
+    String? token;
+
+    // 1. Mobil Deep Link (zoozy://reset-password?token=...)
+    if (uri.scheme == 'zoozy' &&
+        (uri.host == 'reset-password' || uri.path.contains('reset-password'))) {
+      token = uri.queryParameters['token'];
+    }
+    // 2. Web URL Fragment (http://domain/#/reset-password?token=...)
+    else if (uri.fragment.contains('reset-password')) {
+      // Fragment içindeki query parametrelerini ayrıştır
+      try {
+        // "reset-password?token=..." kısmını al
+        final part = uri.fragment.split('reset-password').last;
+        if (part.startsWith('?')) {
+          final params = Uri.splitQueryString(part.substring(1));
+          token = params['token'];
+        }
+      } catch (e) {
+        log('Fragment parsing error: $e');
+      }
+    }
+
+    if (token != null && token.isNotEmpty) {
+      log('Token found: $token');
+      // Navigate to ResetPasswordConfirmScreen
+      // Use a slight delay to ensure the app is mounted
+      Future.delayed(const Duration(milliseconds: 500), () {
+        navigatorKey.currentState?.push(
+          MaterialPageRoute(
+            builder: (_) => ResetPasswordConfirmScreen(token: token!),
+          ),
+        );
+      });
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
+      navigatorKey: navigatorKey,
       debugShowCheckedModeBanner: false,
       title: 'Zoozy App',
       theme: ThemeData(

@@ -14,6 +14,7 @@ class ResetPasswordConfirmScreen extends StatefulWidget {
 }
 
 class _ResetPasswordConfirmScreenState extends State<ResetPasswordConfirmScreen> {
+  final TextEditingController _codeController = TextEditingController(); // YENİ: Kod girişi için
   final TextEditingController _passwordController = TextEditingController();
   final TextEditingController _confirmPasswordController = TextEditingController();
   final AuthService _authService = AuthService();
@@ -21,10 +22,22 @@ class _ResetPasswordConfirmScreenState extends State<ResetPasswordConfirmScreen>
   bool _isLoading = false;
   bool _obscurePassword = true;
   bool _obscureConfirmPassword = true;
+  
+  // Eğer token boş geldiyse (Manuel Mod), kod girişi gösterilecek
+  bool get _isManualMode => widget.token.isEmpty;
 
   static const Color zoozyPurple = Color(0xFF9C27B0);
   static const Color zoozyGradientStart = Color(0xFFB39DDB);
   static const Color zoozyGradientEnd = Color(0xFFF48FB1);
+  
+  @override
+  void initState() {
+    super.initState();
+    // Eğer linkten geldiyse kodu direkt doldurabiliriz (opsiyonel)
+    if (!_isManualMode) {
+      _codeController.text = widget.token;
+    }
+  }
 
   Future<void> _confirmResetPassword() async {
     if (!_formKey.currentState!.validate()) {
@@ -36,8 +49,6 @@ class _ResetPasswordConfirmScreenState extends State<ResetPasswordConfirmScreen>
         const SnackBar(
           content: Text("Şifreler eşleşmiyor."),
           backgroundColor: Colors.redAccent,
-          behavior: SnackBarBehavior.floating,
-          margin: EdgeInsets.all(16),
         ),
       );
       return;
@@ -46,8 +57,11 @@ class _ResetPasswordConfirmScreenState extends State<ResetPasswordConfirmScreen>
     setState(() => _isLoading = true);
 
     try {
+      // Manuel modda kullanıcının girdiği kod kullanılır, yoksa linkten gelen token
+      final tokenToUse = _isManualMode ? _codeController.text.trim() : widget.token;
+
       final response = await _authService.confirmResetPassword(
-        widget.token,
+        tokenToUse,
         _passwordController.text.trim(),
       );
 
@@ -165,6 +179,38 @@ class _ResetPasswordConfirmScreenState extends State<ResetPasswordConfirmScreen>
                       ),
                     ),
                     const SizedBox(height: 32),
+
+                    // MANUEL MOD İSE KOD GİRİŞ ALANI GÖSTER
+                    if (_isManualMode) ...[
+                      Container(
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          borderRadius: BorderRadius.circular(12),
+                          boxShadow: [
+                            BoxShadow(color: Colors.black.withOpacity(0.1), blurRadius: 10),
+                          ],
+                        ),
+                        padding: const EdgeInsets.all(20),
+                        margin: const EdgeInsets.only(bottom: 20),
+                        child: TextFormField(
+                          controller: _codeController,
+                          keyboardType: TextInputType.number,
+                          maxLength: 6,
+                          decoration: const InputDecoration(
+                            labelText: "Doğrulama Kodu",
+                            hintText: "Email'e gelen 6 haneli kod",
+                            counterText: "",
+                            prefixIcon: Icon(Icons.vpn_key, color: zoozyPurple),
+                            border: OutlineInputBorder(),
+                          ),
+                          validator: (value) {
+                            if (value == null || value.isEmpty) return 'Lütfen kodu girin';
+                            if (value.length < 6) return 'Kod 6 haneli olmalı';
+                            return null;
+                          },
+                        ),
+                      ),
+                    ],
 
                     // Şifre alanı
                     Container(

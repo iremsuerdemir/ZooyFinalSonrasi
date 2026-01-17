@@ -110,45 +110,37 @@ namespace ZoozyApi.Controllers
         }
 
         /// <summary>
-        /// Şifre sıfırlama talebi oluştur (Email'e link gönder)
+        /// Şifre sıfırlama linki gönder
         /// POST /api/auth/reset-password
         /// </summary>
         [HttpPost("reset-password")]
         public async Task<IActionResult> ResetPassword([FromBody] ResetPasswordRequest request)
         {
-            if (request == null || string.IsNullOrWhiteSpace(request.Email))
+            if (string.IsNullOrWhiteSpace(request?.Email))
             {
-                return BadRequest(new ResetPasswordResponse
-                {
-                    Success = false,
-                    Message = "Email gereklidir."
-                });
+                return BadRequest(new { success = false, message = "Email gereklidir." });
             }
 
             var result = await _authService.ResetPasswordAsync(request.Email);
-            return Ok(result);
+            return result.Success ? Ok(result) : BadRequest(result);
         }
 
         /// <summary>
-        /// Token ile şifre sıfırlama onayı ve yeni şifre belirleme
+        /// Yeni şifreyi onayla
         /// POST /api/auth/confirm-reset-password
         /// </summary>
         [HttpPost("confirm-reset-password")]
         public async Task<IActionResult> ConfirmResetPassword([FromBody] ConfirmResetPasswordRequest request)
         {
-            if (request == null || string.IsNullOrWhiteSpace(request.Token) || string.IsNullOrWhiteSpace(request.NewPassword))
+            if (!ModelState.IsValid)
             {
-                return BadRequest(new ConfirmResetPasswordResponse
-                {
-                    Success = false,
-                    Message = "Token ve yeni şifre gereklidir."
-                });
+                return BadRequest(new { success = false, message = "Geçersiz istek." });
             }
 
             var result = await _authService.ConfirmResetPasswordAsync(request.Token, request.NewPassword);
             return result.Success ? Ok(result) : BadRequest(result);
         }
-
+        
         /// <summary>
         /// Kullanıcı sözleşme onaylarını güncelle
         /// POST /api/auth/update-agreements

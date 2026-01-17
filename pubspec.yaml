@@ -47,6 +47,7 @@ dependencies:
   http: ^1.2.2
 
   url_launcher: ^6.3.0
+  app_links: ^3.4.1 # Deep linking support
 
   # Cupertino icons
   cupertino_icons: ^1.0.8

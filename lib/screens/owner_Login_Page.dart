@@ -86,12 +86,26 @@ class _OwnerLoginPageState extends State<OwnerLoginPage> {
             }
           }
         } else {
-          // Başarısız login
+          // Başarısız login: Eğer Google uyarısı ise Sarı, değilse Kırmızı göster
+          final isGoogleWarning = response.message.contains("Google");
+          
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
-              content: Text(response.message),
-              backgroundColor: Colors.red,
-              duration: const Duration(seconds: 3),
+              content: Text(
+                response.message,
+                // Sarı arka planda siyah yazı daha okunaklı olur
+                style: TextStyle(
+                  color: isGoogleWarning ? Colors.black87 : Colors.white,
+                  fontWeight: isGoogleWarning ? FontWeight.bold : FontWeight.normal,
+                ),
+              ),
+              backgroundColor: isGoogleWarning ? Colors.amber : Colors.red,
+              duration: Duration(seconds: isGoogleWarning ? 6 : 3), // Uyarı mesajı daha uzun ekranda kalsın
+              behavior: SnackBarBehavior.floating,
+              margin: isGoogleWarning ? const EdgeInsets.all(10) : null,
+              shape: isGoogleWarning 
+                  ? RoundedRectangleBorder(borderRadius: BorderRadius.circular(10))
+                  : null,
             ),
           );
         }
