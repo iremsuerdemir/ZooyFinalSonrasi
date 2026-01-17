@@ -117,6 +117,19 @@ class _ProfileScreenState extends State<ProfileScreen> {
   }
 
   Future<void> _loadProfileData() async {
+    // Misafir kontrolü
+    final isGuest = await GuestAccessService.isGuest();
+    if (isGuest) {
+      if (mounted) {
+        setState(() {
+          username = "Misafir Kullanıcı";
+          email = "";
+          _profileImage = null;
+        });
+      }
+      return;
+    }
+
     final prefs = await SharedPreferences.getInstance();
     setState(() {
       // İsim: önce backend ile senkronize olan displayName, sonra eski username anahtarı

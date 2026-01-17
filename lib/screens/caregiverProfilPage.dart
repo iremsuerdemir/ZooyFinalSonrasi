@@ -310,7 +310,10 @@ class _CaregiverProfilpageState extends State<CaregiverProfilpage> {
                 // Message Butonu (Alanının yarısını kaplar)
                 Expanded(
                   child: OutlinedButton.icon(
-                    onPressed: () {
+                    onPressed: () async {
+                      if (!await GuestAccessService.ensureLoggedIn(context)) {
+                        return;
+                      }
                       Navigator.push(
                         context,
                         MaterialPageRoute(

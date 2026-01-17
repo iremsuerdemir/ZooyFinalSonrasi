@@ -321,15 +321,7 @@ class _RegisterPageState extends State<RegisterPage> {
                       },
                     ),
                   ),
-                  const SizedBox(height: 15),
-                  _buildTextField(
-                    controller: referralController,
-                    hintText: 'Davet Kodu (Opsiyonel)',
-                    prefixIcon: const Icon(
-                      Icons.card_giftcard,
-                      color: Color(0xFF7A4FAD),
-                    ),
-                  ),
+               
                   const SizedBox(height: 25),
                   SizedBox(
                     width: double.infinity,

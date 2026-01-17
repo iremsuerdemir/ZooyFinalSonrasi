@@ -209,5 +209,24 @@ namespace ZoozyApi.Controllers
                 photoUrl = user.PhotoUrl
             });
         }
+
+        // -------------------------------------------------------------
+        // 🗑️ Kullanıcı Silme (Hesap Kapatma)
+        // DELETE: api/users/{id}
+        // -------------------------------------------------------------
+        [HttpDelete("{id}")]
+        public async Task<IActionResult> DeleteUser(int id)
+        {
+            var user = await _db.Users.FindAsync(id);
+            if (user == null)
+            {
+                return NotFound(new { message = "Kullanıcı bulunamadı" });
+            }
+
+            _db.Users.Remove(user);
+            await _db.SaveChangesAsync();
+
+            return Ok(new { success = true, message = "Kullanıcı başarıyla silindi" });
+        }
     }
 }

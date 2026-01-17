@@ -1957,3 +1957,4 @@ C:\Users\erdem\Downloads\ZooyFinalSonrasi-master\ZooyFinalSonrasi-master\ZoozyAp
 C:\Users\erdem\Downloads\ZooyFinalSonrasi-master\ZooyFinalSonrasi-master\ZoozyApi\obj\Debug\net8.0\ZoozyApi.pdb
 C:\Users\erdem\Downloads\ZooyFinalSonrasi-master\ZooyFinalSonrasi-master\ZoozyApi\obj\Debug\net8.0\ZoozyApi.genruntimeconfig.cache
 C:\Users\erdem\Downloads\ZooyFinalSonrasi-master\ZooyFinalSonrasi-master\ZoozyApi\obj\Debug\net8.0\ref\ZoozyApi.dll
+C:\Users\erdem\Downloads\ZooyFinalSonrasi-master\ZooyFinalSonrasi-master\ZoozyApi\obj\Debug\net8.0\ZoozyApi.sourcelink.json

@@ -16,6 +16,7 @@ namespace ZoozyApi.Services
         Task<UserDto?> GetUserByEmailAsync(string email);
         Task<ResetPasswordResponse> ResetPasswordAsync(string email);
         Task<ConfirmResetPasswordResponse> ConfirmResetPasswordAsync(string token, string newPassword);
+        Task<bool> UpdateUserAgreementsAsync(int userId, bool termsAccepted, bool privacyAccepted);
     }
 
     public class AuthService : IAuthService
@@ -122,12 +123,21 @@ namespace ZoozyApi.Services
         var user = await _context.Users
             .FirstOrDefaultAsync(u => u.Email.ToLower() == request.Email.ToLower());
 
-        if (user == null || !user.IsActive)
+        if (user == null)
         {
             return new AuthResponse
             {
                 Success = false,
-                Message = "Email veya şifre yanlış."
+                Message = "Böyle bir hesap bulunmamaktadır. Hesap oluşturmak için kayıt oluşturun."
+            };
+        }
+
+        if (!user.IsActive)
+        {
+            return new AuthResponse
+            {
+                Success = false,
+                Message = "Hesabınız aktif değil."
             };
         }
 
@@ -341,7 +351,9 @@ namespace ZoozyApi.Services
                 PhotoUrl = user.PhotoUrl,
                 Provider = user.Provider,
                 FirebaseUid = user.FirebaseUid,
-                CreatedAt = user.CreatedAt
+                CreatedAt = user.CreatedAt,
+                TermsAccepted = user.TermsAccepted,
+                PrivacyAccepted = user.PrivacyAccepted
             };
         }
 
@@ -495,6 +507,29 @@ namespace ZoozyApi.Services
                     Success = false,
                     Message = "Şifre güncelleme işlemi sırasında hata oluştu."
                 };
+            }
+        }
+
+        public async Task<bool> UpdateUserAgreementsAsync(int userId, bool termsAccepted, bool privacyAccepted)
+        {
+            try
+            {
+                var user = await _context.Users.FindAsync(userId);
+                if (user == null) return false;
+
+                user.TermsAccepted = termsAccepted;
+                user.PrivacyAccepted = privacyAccepted;
+                user.UpdatedAt = DateTime.UtcNow;
+
+                _context.Users.Update(user);
+                await _context.SaveChangesAsync();
+                
+                return true;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError($"Agreement update failed: {ex.Message}");
+                return false;
             }
         }
 

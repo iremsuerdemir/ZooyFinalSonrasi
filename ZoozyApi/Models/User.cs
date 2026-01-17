@@ -17,6 +17,10 @@ namespace ZoozyApi.Models
         public string? PasswordResetToken { get; set; }
         public DateTime? PasswordResetTokenExpiry { get; set; }
 
+        // Sözleşme Onayları
+        public bool TermsAccepted { get; set; } = false;
+        public bool PrivacyAccepted { get; set; } = false;
+
         // Navigation property - User'ın pet profilleri
         public ICollection<PetProfile> PetProfiles { get; set; } = new List<PetProfile>();
     }

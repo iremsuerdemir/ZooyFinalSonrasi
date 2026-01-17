@@ -8,6 +8,7 @@ import 'package:zoozy/screens/password_forgot_screen.dart';
 import 'package:zoozy/screens/terms_of_service_page.dart';
 import 'package:zoozy/screens/privacy_policy_page.dart';
 import 'package:zoozy/screens/profile_screen.dart';
+import 'package:zoozy/services/auth_service.dart';
 
 // Şifre değiştirme sayfası için bir geçici import ekliyorum.
 // Gerçek uygulamanızda bu sayfayı oluşturmanız gerekecektir.
@@ -21,6 +22,7 @@ class SettingsScreen extends StatefulWidget {
 }
 
 class _SettingsScreenState extends State<SettingsScreen> {
+  final AuthService _authService = AuthService();
   static const Color zoozyPurple = Color(0xFF9C27B0);
   static const Color zoozyGradientStart = Color(0xFFB39DDB);
   static const Color zoozyGradientEnd = Color(0xFFF48FB1);
@@ -154,110 +156,138 @@ class _SettingsScreenState extends State<SettingsScreen> {
               Navigator.pop(dialogContext);
 
               final user = FirebaseAuth.instance.currentUser;
-              if (user == null) {
+              final prefs = await SharedPreferences.getInstance();
+              final int? userId = prefs.getInt('userId');
+
+              if (user == null && userId == null) {
                 print("DELETE ERROR: Kullanıcı oturumu bulunamadı.");
+                if (context.mounted) {
+                   ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(content: Text("Oturum bulunamadı.")),
+                  );
+                }
                 return;
               }
+              
               print(
-                "DELETE: Kullanıcı UID: ${user.uid} - Hesap silme işlemi başlatılıyor.",
+                "DELETE: Kullanıcı UID: ${user?.uid}, DB ID: $userId - Hesap silme işlemi başlatılıyor.",
               );
 
               try {
-                // 🔸 Google hesabı, diğer sosyal medya veya anonim ise (tekrar şifre istemeye gerek yok)
-                if (user.providerData.any(
-                  (info) =>
-                      info.providerId == 'google.com' ||
-                      info.providerId == 'facebook.com' ||
-                      info.providerId == 'twitter.com' ||
-                      info.providerId == 'apple.com' ||
-                      info.providerId == 'anonymous',
-                )) {
-                  print(
-                    "DELETE: Google/Sosyal Medya/Anonim hesap. Direkt silme deneniyor.",
-                  );
-                  await user.delete();
-                } else {
-                  // 🔸 Email/şifre ile giriş yapan kullanıcılar için şifre doğrulama
-                  print(
-                    "DELETE: Email/Şifre hesabı. Şifre doğrulaması isteniyor.",
-                  );
-                  String? enteredPassword = await showDialog<String>(
-                    context: context,
-                    builder: (passwordDialogContext) {
-                      final TextEditingController passwordController =
-                          TextEditingController();
-                      return AlertDialog(
-                        title: const Text("Şifreyi Onayla"),
-                        content: TextField(
-                          controller: passwordController,
-                          obscureText: true,
-                          decoration: const InputDecoration(
-                            hintText: "Şifrenizi girin",
-                          ),
-                        ),
-                        actions: [
-                          TextButton(
-                            onPressed: () =>
-                                Navigator.pop(passwordDialogContext, null),
-                            child: const Text("İptal"),
-                          ),
-                          TextButton(
-                            onPressed: () => Navigator.pop(
-                              passwordDialogContext,
-                              passwordController.text,
+                // 1. Firebase (varsa) Re-authenticate işlemleri
+                if (user != null) {
+                  // 🔸 Google hesabı, diğer sosyal medya veya anonim ise (tekrar şifre istemeye gerek yok)
+                  if (user.providerData.any(
+                    (info) =>
+                        info.providerId == 'google.com' ||
+                        info.providerId == 'facebook.com' ||
+                        info.providerId == 'twitter.com' ||
+                        info.providerId == 'apple.com' ||
+                        info.providerId == 'anonymous',
+                  )) {
+                    print(
+                      "DELETE: Google/Sosyal Medya/Anonim hesap. Direkt silme deneniyor.",
+                    );
+                    // Sosyal login ise re-auth gerekmez veya zordur, direkt devam
+                  } else {
+                    // 🔸 Email/şifre ile giriş yapan kullanıcılar için şifre doğrulama
+                    print(
+                      "DELETE: Email/Şifre hesabı. Şifre doğrulaması isteniyor.",
+                    );
+                    String? enteredPassword = await showDialog<String>(
+                      context: context,
+                      builder: (passwordDialogContext) {
+                        final TextEditingController passwordController =
+                            TextEditingController();
+                        return AlertDialog(
+                          title: const Text("Şifreyi Onayla"),
+                          content: TextField(
+                            controller: passwordController,
+                            obscureText: true,
+                            decoration: const InputDecoration(
+                              hintText: "Şifrenizi girin",
                             ),
-                            child: const Text("Onayla"),
                           ),
-                        ],
-                      );
-                    },
-                  );
-
-                  if (enteredPassword == null || enteredPassword.isEmpty) {
-                    print(
-                      "DELETE: Şifre doğrulama iptal edildi veya boş bırakıldı.",
+                          actions: [
+                            TextButton(
+                              onPressed: () =>
+                                  Navigator.pop(passwordDialogContext, null),
+                              child: const Text("İptal"),
+                            ),
+                            TextButton(
+                              onPressed: () => Navigator.pop(
+                                passwordDialogContext,
+                                passwordController.text,
+                              ),
+                              child: const Text("Onayla"),
+                            ),
+                          ],
+                        );
+                      },
                     );
-                    return;
-                  }
 
-                  if (user.email == null) {
-                    print(
-                      "DELETE ERROR: Email/Şifre kullanıcısının e-posta adresi bulunamadı.",
-                    );
-                    if (context.mounted) {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(
-                          content: Text(
-                            "Hesap silinemedi. Lütfen tekrar giriş yapın.",
-                          ),
-                          backgroundColor: Colors.red,
-                          behavior: SnackBarBehavior.floating,
-                          margin: EdgeInsets.all(16),
-                        ),
+                    if (enteredPassword == null || enteredPassword.isEmpty) {
+                      print(
+                        "DELETE: Şifre doğrulama iptal edildi veya boş bırakıldı.",
                       );
+                      return;
                     }
-                    return;
+
+                    if (user.email == null) {
+                      print(
+                        "DELETE ERROR: Email/Şifre kullanıcısının e-posta adresi bulunamadı.",
+                      );
+                      if (context.mounted) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(
+                            content: Text(
+                              "Hesap silinemedi. Lütfen tekrar giriş yapın.",
+                            ),
+                            backgroundColor: Colors.red,
+                            behavior: SnackBarBehavior.floating,
+                            margin: EdgeInsets.all(16),
+                          ),
+                        );
+                      }
+                      return;
+                    }
+
+                    // Kimlik bilgileriyle yeniden oturum açma
+                    final cred = EmailAuthProvider.credential(
+                      email: user.email!,
+                      password: enteredPassword,
+                    );
+
+                    print("DELETE: Kullanıcı yeniden kimliklendiriliyor...");
+                    await user.reauthenticateWithCredential(cred);
+                    print(
+                      "DELETE: Yeniden kimliklendirme başarılı.",
+                    );
                   }
+                } // End if user != null
 
-                  // Kimlik bilgileriyle yeniden oturum açma
-                  final cred = EmailAuthProvider.credential(
-                    email: user.email!,
-                    password: enteredPassword,
-                  );
+                // 2. BACKEND API SİLME İŞLEMİ (Eklendi)
+                if (userId != null) {
+                   print("DELETE: Backend veritabanından kullanıcı siliniyor ($userId)...");
+                   bool apiDeleted = await _authService.deleteAccount(userId);
+                   if (apiDeleted) {
+                     print("DELETE: Backend silme başarılı.");
+                   } else {
+                     print("DELETE WARNING: Backend silme başarısız oldu veya kullanıcı zaten silinmiş.");
+                   }
+                }
 
-                  print("DELETE: Kullanıcı yeniden kimliklendiriliyor...");
-                  await user.reauthenticateWithCredential(cred);
-                  print(
-                    "DELETE: Yeniden kimliklendirme başarılı, hesap siliniyor...",
-                  );
-                  await user.delete();
+                // 3. FIREBASE SİLME İŞLEMİ
+                if (user != null) {
+                   print("DELETE: Firebase kullanıcısı siliniyor...");
+                   await user.delete();
+                   print("DELETE Success: Firebase kullanıcısı silindi.");
                 }
 
                 // Hesap silme başarılı
                 print("DELETE SUCCESS: Hesap başarıyla silindi.");
 
                 // Hesap silindikten sonra SharedPreferences temizle
-                final prefs = await SharedPreferences.getInstance();
                 await prefs.clear();
                 print("DELETE: SharedPreferences temizlendi.");
 
@@ -509,7 +539,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                                       MaterialPageRoute(
                                         builder: (_) =>
                                             const TermsOfServicePage(
-                                              isForApproval: false,
+                                              showBackButton: true,
                                             ),
                                       ),
                                     );

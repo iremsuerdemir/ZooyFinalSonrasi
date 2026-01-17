@@ -147,7 +147,7 @@ class HelpCenterPage extends StatelessWidget {
                             context,
                             MaterialPageRoute(
                               builder: (_) => const TermsOfServicePage(
-                                  isForApproval: false),
+                                  showBackButton: true),
                             ),
                           );
                         },

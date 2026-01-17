@@ -212,23 +212,57 @@ class _ExploreScreenState extends State<ExploreScreen> {
             onPressed: () {
               showDialog(
                 context: context,
-                builder: (context) => AlertDialog(
-                  title: const Text("Çıkış Yap"),
-                  content:
-                      const Text("Hesabınızdan çıkış yapmak istiyor musunuz?"),
+                builder: (dialogContext) => AlertDialog(
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(15),
+                  ),
+                  contentPadding: const EdgeInsets.fromLTRB(24.0, 20.0, 24.0, 10.0),
+                  content: const Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(Icons.logout, color: Color(0xFF9C27B0), size: 50),
+                      SizedBox(height: 12),
+                      Text(
+                        'Oturumu kapatmak istediğine emin misin?',
+                        style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                        textAlign: TextAlign.center,
+                      ),
+                      SizedBox(height: 8),
+                      Text(
+                        'Giriş ekranına yönlendirileceksin.',
+                        style: TextStyle(fontSize: 14, color: Colors.grey),
+                        textAlign: TextAlign.center,
+                      ),
+                    ],
+                  ),
                   actions: [
-                    TextButton(
-                      onPressed: () => Navigator.pop(context),
-                      child: const Text("İptal"),
-                    ),
-                    TextButton(
-                      onPressed: () {
-                        Navigator.pop(context);
-                        _logout();
-                      },
-                      child: const Text(
-                        "Çıkış Yap",
-                        style: TextStyle(color: Colors.red),
+                    Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                      child: GestureDetector(
+                        onTap: () {
+                          Navigator.of(dialogContext).pop();
+                          _logout();
+                        },
+                        child: Container(
+                          width: double.infinity,
+                          padding: const EdgeInsets.symmetric(vertical: 14),
+                          decoration: BoxDecoration(
+                            gradient: const LinearGradient(
+                              colors: [Color(0xFF9C27B0), Color(0xFF7B1FA2)],
+                            ),
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                          child: const Center(
+                            child: Text(
+                              'Çıkış Yap',
+                              style: TextStyle(
+                                color: Colors.white,
+                                fontSize: 16,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                          ),
+                        ),
                       ),
                     ),
                   ],

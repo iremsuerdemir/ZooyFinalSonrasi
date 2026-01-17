@@ -8,6 +8,8 @@ namespace ZoozyApi.Dtos
         public string? PhotoUrl { get; set; }
         public string Provider { get; set; } = "local"; // 'local' or 'google'
         public string? FirebaseUid { get; set; }
+        public bool TermsAccepted { get; set; }
+        public bool PrivacyAccepted { get; set; }
         public DateTime CreatedAt { get; set; }
     }
 }

@@ -240,6 +240,38 @@ class AuthService {
   }
 
   /// ==========================================
+  /// 4c. SÖZLEŞME ONAYLARI GÜNCELLEME
+  /// ==========================================
+  Future<bool> updateAgreements(int userId) async {
+    try {
+      final response = await httpClient
+          .post(
+            Uri.parse('$baseUrl/update-agreements'),
+            headers: {'Content-Type': 'application/json'},
+            body: jsonEncode({
+              'userId': userId,
+              'termsAccepted': true,
+              'privacyAccepted': true,
+            }),
+          )
+          .timeout(const Duration(seconds: 10));
+
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+        if (data['success'] == true) {
+          // Local storage'daki kullanıcı bilgisini güncelle
+          await _updateLocalUserAgreements();
+          return true;
+        }
+      }
+      return false;
+    } catch (e) {
+      print("Sözleşme güncelleme hatası: $e");
+      return false;
+    }
+  }
+
+  /// ==========================================
   /// 5. KULLANICI BİLGİLERİNİ AL (ID ile)
   /// ==========================================
   Future<UserData?> getUserById(int id) async {
@@ -296,6 +328,8 @@ class AuthService {
     await prefs.remove('photoUrl');
     await prefs.remove('provider');
     await prefs.remove('firebaseUid');
+    await prefs.remove('termsAccepted');
+    await prefs.remove('privacyAccepted');
   }
 
   /// ==========================================
@@ -313,6 +347,17 @@ class AuthService {
     if (user['firebaseUid'] != null) {
       await prefs.setString('firebaseUid', user['firebaseUid']);
     }
+    await prefs.setBool('termsAccepted', user['termsAccepted'] ?? false);
+    await prefs.setBool('privacyAccepted', user['privacyAccepted'] ?? false);
+  }
+  
+  /// ==========================================
+  /// 7b. LOCAL ONAYLARI GÜNCELLE
+  /// ==========================================
+  Future<void> _updateLocalUserAgreements() async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setBool('termsAccepted', true);
+    await prefs.setBool('privacyAccepted', true);
   }
 
   /// ==========================================
@@ -334,6 +379,8 @@ class AuthService {
       provider: prefs.getString('provider') ?? 'local',
       firebaseUid: prefs.getString('firebaseUid'),
       createdAt: DateTime.now(),
+      termsAccepted: prefs.getBool('termsAccepted') ?? false,
+      privacyAccepted: prefs.getBool('privacyAccepted') ?? false,
     );
   }
 
@@ -343,6 +390,27 @@ class AuthService {
   Future<bool> isLoggedIn() async {
     final prefs = await SharedPreferences.getInstance();
     return prefs.getInt('userId') != null;
+  }
+
+  /// ==========================================
+  /// 10. KULLANICI HESABINI SİL (Backend)
+  /// ==========================================
+  Future<bool> deleteAccount(int userId) async {
+    try {
+      final response = await httpClient.delete(
+        Uri.parse('${ApiConfig.usersUrl}/$userId'),
+        headers: {'Content-Type': 'application/json'},
+      ).timeout(const Duration(seconds: 15));
+
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+        return data['success'] == true;
+      }
+      return false;
+    } catch (e) {
+      print("Hesap silme hatası: $e");
+      return false;
+    }
   }
 }
 
@@ -372,6 +440,8 @@ class UserData {
   final String provider;
   final String? firebaseUid;
   final DateTime createdAt;
+  final bool termsAccepted;
+  final bool privacyAccepted;
 
   UserData({
     required this.id,
@@ -381,6 +451,8 @@ class UserData {
     required this.provider,
     this.firebaseUid,
     required this.createdAt,
+    this.termsAccepted = false,
+    this.privacyAccepted = false,
   });
 
   factory UserData.fromJson(Map<String, dynamic> json) {
@@ -393,6 +465,8 @@ class UserData {
       firebaseUid: json['firebaseUid'],
       createdAt:
           DateTime.parse(json['createdAt'] ?? DateTime.now().toIso8601String()),
+      termsAccepted: json['termsAccepted'] ?? false,
+      privacyAccepted: json['privacyAccepted'] ?? false,
     );
   }
 
@@ -405,6 +479,8 @@ class UserData {
       'provider': provider,
       'firebaseUid': firebaseUid,
       'createdAt': createdAt.toIso8601String(),
+      'termsAccepted': termsAccepted,
+      'privacyAccepted': privacyAccepted,
     };
   }
 }

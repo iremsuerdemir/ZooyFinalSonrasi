@@ -1,4 +1,3 @@
-import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:zoozy/screens/explore_screen.dart';
 import 'package:zoozy/screens/forgot_password.dart';
@@ -53,66 +52,58 @@ class _OwnerLoginPageState extends State<OwnerLoginPage> {
           await prefs.setString('email', response.user!.email.toLowerCase());
           await GuestAccessService.disableGuestMode();
 
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              backgroundColor: Colors.green,
-              content: Text(
-                "Giriş başarılı! ${response.user!.displayName}. Yönlendiriliyorsunuz...",
-                maxLines: 2,
-                overflow: TextOverflow.ellipsis,
-              ),
-            ),
-          );
+          bool needsApproval = response.user != null &&
+              (!response.user!.termsAccepted ||
+                  !response.user!.privacyAccepted);
 
-          await Future.delayed(const Duration(seconds: 2));
+          if (!needsApproval) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                backgroundColor: Colors.green,
+                content: Text(
+                  "Giriş başarılı! ${response.user!.displayName}. Yönlendiriliyorsunuz...",
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ),
+            );
+            await Future.delayed(const Duration(seconds: 2));
+          }
 
           if (mounted) {
-            Navigator.pushReplacement(
-              context,
-              MaterialPageRoute(builder: (_) => const ExploreScreen()),
-            );
+            if (needsApproval) {
+              Navigator.pushReplacement(
+                context,
+                MaterialPageRoute(
+                    builder: (_) =>
+                        const TermsOfServicePage(showBackButton: false)),
+              );
+            } else {
+              Navigator.pushReplacement(
+                context,
+                MaterialPageRoute(builder: (_) => const ExploreScreen()),
+              );
+            }
           }
         } else {
           // Başarısız login
-          if (email.toLowerCase().trim().endsWith('@gmail.com')) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(
-                content: Text(
-                    "Google hesabınızın bilgilerini buraya yazmayın. Lütfen 'Google ile giriş yap' butonunu kullanın."),
-                backgroundColor: Colors.orange,
-                duration: Duration(seconds: 5),
-              ),
-            );
-          } else {
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(
-                content: Text(response.message),
-                backgroundColor: Colors.red,
-                duration: const Duration(seconds: 3),
-              ),
-            );
-          }
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(response.message),
+              backgroundColor: Colors.red,
+              duration: const Duration(seconds: 3),
+            ),
+          );
         }
       } catch (e) {
         ScaffoldMessenger.of(context).clearSnackBars();
 
-        if (email.toLowerCase().trim().endsWith('@gmail.com')) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text(
-                  "Google hesabınızın bilgilerini buraya yazmayın. Lütfen 'Google ile giriş yap' butonunu kullanın."),
-              backgroundColor: Colors.orange,
-              duration: Duration(seconds: 5),
-            ),
-          );
-        } else {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text("Hata: $e"),
-              backgroundColor: Colors.red,
-            ),
-          );
-        }
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text("Hata: $e"),
+            backgroundColor: Colors.red,
+          ),
+        );
       } finally {
         if (mounted) setState(() => _isLoading = false);
       }
@@ -172,22 +163,38 @@ class _OwnerLoginPageState extends State<OwnerLoginPage> {
           await prefs.setString('firebaseUid', user.uid);
           await GuestAccessService.disableGuestMode();
 
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              backgroundColor: Colors.green,
-              content: Text(
-                "Google ile giriş başarılı! Hoş geldiniz ${response.user!.displayName}",
-                maxLines: 2,
-                overflow: TextOverflow.ellipsis,
+          bool needsApproval = response.user != null &&
+              (!response.user!.termsAccepted ||
+                  !response.user!.privacyAccepted);
+
+          if (!needsApproval) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                backgroundColor: Colors.green,
+                content: Text(
+                  "Google ile giriş başarılı! Hoş geldiniz ${response.user!.displayName}",
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                ),
               ),
-            ),
-          );
+            );
+            await Future.delayed(const Duration(seconds: 2));
+          }
 
           if (mounted) {
-            Navigator.pushReplacement(
-              context,
-              MaterialPageRoute(builder: (_) => const ExploreScreen()),
-            );
+            if (needsApproval) {
+              Navigator.pushReplacement(
+                context,
+                MaterialPageRoute(
+                    builder: (_) =>
+                        const TermsOfServicePage(showBackButton: false)),
+              );
+            } else {
+              Navigator.pushReplacement(
+                context,
+                MaterialPageRoute(builder: (_) => const ExploreScreen()),
+              );
+            }
           }
         } else {
           ScaffoldMessenger.of(context).showSnackBar(
@@ -379,21 +386,24 @@ class _OwnerLoginPageState extends State<OwnerLoginPage> {
                   child: TextButton(
                     onPressed: () {
                       final email = _emailController.text.trim();
-                      
+
                       // Email girilmişse o email'i ForgotPassword sayfasına gönder
-                      if (email.isNotEmpty && 
-                          RegExp(r'^[\w-.]+@([\w-]+\.)+[\w]{2,4}$').hasMatch(email)) {
+                      if (email.isNotEmpty &&
+                          RegExp(r'^[\w-.]+@([\w-]+\.)+[\w]{2,4}$')
+                              .hasMatch(email)) {
                         Navigator.push(
                           context,
                           MaterialPageRoute(
-                            builder: (context) => ForgotPassword(initialEmail: email),
+                            builder: (context) =>
+                                ForgotPassword(initialEmail: email),
                           ),
                         );
                       } else {
                         // Email girilmemişse uyarı göster
                         ScaffoldMessenger.of(context).showSnackBar(
                           const SnackBar(
-                            content: Text("Lütfen önce e-posta adresinizi girin."),
+                            content:
+                                Text("Lütfen önce e-posta adresinizi girin."),
                             backgroundColor: Colors.orange,
                             behavior: SnackBarBehavior.floating,
                             margin: EdgeInsets.all(16),
@@ -495,55 +505,11 @@ class _OwnerLoginPageState extends State<OwnerLoginPage> {
                     color: Colors.white.withOpacity(0.9),
                     borderRadius: BorderRadius.circular(8),
                   ),
-                  child: Text.rich(
-                    TextSpan(
-                      text: "Kayıt Ol veya Giriş Yap’a tıklayarak, ",
-                      style: const TextStyle(
-                        color: Colors.black87,
-                        fontSize: 12,
-                      ),
-                      children: [
-                        TextSpan(
-                          text: "Hizmet Şartları",
-                          style: const TextStyle(
-                            color: Color(0xFF7A4FAD),
-                            fontWeight: FontWeight.bold,
-                            decoration: TextDecoration.underline,
-                            decorationColor: Color(0xFF7A4FAD),
-                          ),
-                          recognizer: TapGestureRecognizer()
-                            ..onTap = () {
-                              Navigator.push(
-                                context,
-                                MaterialPageRoute(
-                                  builder: (context) =>
-                                      const TermsOfServicePage(),
-                                ),
-                              );
-                            },
-                        ),
-                        const TextSpan(text: " ve "),
-                        TextSpan(
-                          text: "Gizlilik Politikası’nı",
-                          style: const TextStyle(
-                            color: Color(0xFF7A4FAD),
-                            fontWeight: FontWeight.bold,
-                            decoration: TextDecoration.underline,
-                            decorationColor: Color(0xFF7A4FAD),
-                          ),
-                          recognizer: TapGestureRecognizer()
-                            ..onTap = () {
-                              Navigator.push(
-                                context,
-                                MaterialPageRoute(
-                                  builder: (context) =>
-                                      const PrivacyPolicyPage(),
-                                ),
-                              );
-                            },
-                        ),
-                        const TextSpan(text: " kabul etmiş oluyorum."),
-                      ],
+                  child: const Text(
+                    "Kayıt Ol veya Giriş Yap’a tıklayarak, Hizmet Şartları ve Gizlilik Politikası’nı kabul etmiş oluyorum.",
+                    style: TextStyle(
+                      color: Colors.black87,
+                      fontSize: 12,
                     ),
                     textAlign: TextAlign.center,
                   ),

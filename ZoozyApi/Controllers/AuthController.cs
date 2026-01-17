@@ -148,5 +148,26 @@ namespace ZoozyApi.Controllers
             var result = await _authService.ConfirmResetPasswordAsync(request.Token, request.NewPassword);
             return result.Success ? Ok(result) : BadRequest(result);
         }
+
+        /// <summary>
+        /// Kullanıcı sözleşme onaylarını güncelle
+        /// POST /api/auth/update-agreements
+        /// </summary>
+        [HttpPost("update-agreements")]
+        public async Task<IActionResult> UpdateAgreements([FromBody] UpdateAgreementsRequest request)
+        {
+            if (request == null || request.UserId <= 0)
+            {
+                return BadRequest(new { success = false, message = "Geçersiz istek." });
+            }
+
+            var result = await _authService.UpdateUserAgreementsAsync(request.UserId, request.TermsAccepted, request.PrivacyAccepted);
+            
+            if (result)
+            {
+                return Ok(new { success = true, message = "Sözleşme onayları güncellendi." });
+            }
+            return BadRequest(new { success = false, message = "Güncelleme başarısız." });
+        }
     }
 }

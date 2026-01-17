@@ -1,27 +1,24 @@
 import 'dart:math' as math;
 import 'package:flutter/material.dart';
 
-import 'package:zoozy/screens/owner_login_page.dart';
 import 'package:zoozy/screens/privacy_policy_page.dart';
 
 class TermsOfServicePage extends StatefulWidget {
-  /// Sayfa bir onay akışının parçası mı? (örneğin kayıt sürecinde)
-  /// Varsayılan olarak `true`.
-  final bool isForApproval;
+  /// Eğer zorunlu bir akışsa (login sonrası), geri butonu gösterilmez.
+  final bool showBackButton;
 
-  const TermsOfServicePage({super.key, this.isForApproval = true});
+  const TermsOfServicePage({super.key, this.showBackButton = true});
 
   @override
   State<TermsOfServicePage> createState() => _TermsOfServicePageState();
 }
 
 class _TermsOfServicePageState extends State<TermsOfServicePage> {
-  bool isChecked = false;
-
+  // Bu ekranda onay kutusu veya devam etme butonu akışa göre çalışacak.
+  // Zorunlu akışta kullanıcı "Devam" diyerek PrivacyPolicyPage'e gider.
+  
   @override
   Widget build(BuildContext context) {
-    final bool showApprovalWidgets = widget.isForApproval;
-
     return Scaffold(
       body: Stack(
         children: [
@@ -49,16 +46,21 @@ class _TermsOfServicePageState extends State<TermsOfServicePage> {
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      IconButton(
-                        icon: const Icon(
-                          Icons.arrow_back,
-                          color: Colors.white,
-                          size: 28,
-                        ),
-                        onPressed: () {
-                          Navigator.pop(context);
-                        },
-                      ),
+                      // Geri butonu kontrolü
+                      if (widget.showBackButton)
+                        IconButton(
+                          icon: const Icon(
+                            Icons.arrow_back,
+                            color: Colors.white,
+                            size: 28,
+                          ),
+                          onPressed: () {
+                            Navigator.pop(context);
+                          },
+                        )
+                      else
+                        const SizedBox(width: 48), // Yer tutucu
+
                       const Text(
                         'Hizmet Şartları',
                         style: TextStyle(
@@ -182,90 +184,56 @@ class _TermsOfServicePageState extends State<TermsOfServicePage> {
                                 ),
                               ),
 
-                              // Sadece onay akışı aktifse göster
-                              if (showApprovalWidgets) ...[
+                              // Sadece onay akışı aktifse (yani geri butonu kapalıysa) devam butonu gösterelim
+                              if (!widget.showBackButton) ...[
                                 const SizedBox(height: 20),
-                                Row(
-                                  children: [
-                                    AnimatedSwitcher(
-                                      duration: const Duration(
-                                        milliseconds: 300,
-                                      ),
-                                      transitionBuilder: (child, animation) =>
-                                          ScaleTransition(
-                                            scale: animation,
-                                            child: child,
-                                          ),
-                                      child: Checkbox(
-                                        key: ValueKey<bool>(isChecked),
-                                        value: isChecked,
-                                        activeColor: Colors.purple,
-                                        onChanged: (value) {
-                                          setState(() {
-                                            isChecked = value ?? false;
-                                          });
-                                        },
-                                      ),
-                                    ),
-                                    const Expanded(
-                                      child: Text(
-                                        "Okudum, onayladım",
-                                        style: TextStyle(
-                                          fontWeight: FontWeight.bold,
-                                          color: Colors.black87,
-                                        ),
-                                      ),
-                                    ),
-                                  ],
+                                
+                                const Text(
+                                  "Devam ederek Hizmet Şartlarını okuduğunuzu onaylamış olursunuz.",
+                                  textAlign: TextAlign.center,
+                                  style: TextStyle(
+                                    fontSize: 12,
+                                    color: Colors.grey,
+                                  ),
                                 ),
                                 const SizedBox(height: 12),
                                 GestureDetector(
-                                  onTap: isChecked
-                                      ? () {
-                                          Navigator.pushAndRemoveUntil(
-                                            context,
-                                            MaterialPageRoute(
-                                              builder: (context) =>
-                                                  const PrivacyPolicyPage(),
-                                            ),
-                                            (route) => false,
-                                          );
-                                        }
-                                      : null,
+                                  onTap: () {
+                                    // Terms akışı bitti, şimdi Privacy'e geçiyoruz.
+                                    Navigator.push(
+                                      context,
+                                      MaterialPageRoute(
+                                        builder: (context) =>
+                                            const PrivacyPolicyPage(),
+                                      ),
+                                    );
+                                  },
                                   child: Container(
                                     width: double.infinity,
                                     padding: const EdgeInsets.symmetric(
                                       vertical: 16,
                                     ),
                                     decoration: BoxDecoration(
-                                      gradient: LinearGradient(
-                                        colors: isChecked
-                                            ? [
-                                                Colors.purple,
-                                                Colors.deepPurpleAccent,
-                                              ]
-                                            : [
-                                                Colors.grey.shade400,
-                                                Colors.grey.shade300,
-                                              ],
+                                      gradient: const LinearGradient(
+                                        colors: [
+                                          Colors.purple,
+                                          Colors.deepPurpleAccent,
+                                        ],
                                       ),
                                       borderRadius: BorderRadius.circular(14),
-                                      boxShadow: [
-                                        if (isChecked)
-                                          const BoxShadow(
-                                            color: Colors.purpleAccent,
-                                            blurRadius: 8,
-                                            offset: Offset(0, 4),
-                                          ),
+                                      boxShadow: const [
+                                        BoxShadow(
+                                          color: Colors.purpleAccent,
+                                          blurRadius: 8,
+                                          offset: Offset(0, 4),
+                                        ),
                                       ],
                                     ),
-                                    child: Center(
+                                    child: const Center(
                                       child: Text(
                                         "Devam Et",
                                         style: TextStyle(
-                                          color: isChecked
-                                              ? Colors.white
-                                              : Colors.black54,
+                                          color: Colors.white,
                                           fontSize: 18,
                                           fontWeight: FontWeight.bold,
                                         ),
