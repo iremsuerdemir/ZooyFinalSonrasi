@@ -365,6 +365,7 @@ namespace ZoozyApi.Services
                 Email = user.Email,
                 DisplayName = user.DisplayName,
                 PhotoUrl = user.PhotoUrl,
+                Bio = user.Bio,
                 Provider = user.Provider,
                 FirebaseUid = user.FirebaseUid,
                 CreatedAt = user.CreatedAt,

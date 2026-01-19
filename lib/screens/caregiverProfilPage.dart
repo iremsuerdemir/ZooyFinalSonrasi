@@ -18,6 +18,7 @@ import 'package:zoozy/services/comment_service_http.dart';
 import 'package:zoozy/services/favorite_service.dart';
 import 'package:zoozy/services/guest_access_service.dart';
 import 'package:zoozy/services/chat_service.dart'; // Chat Service Eklendi
+import 'package:zoozy/services/auth_service.dart'; // Auth Service for user details
 
 // Tema Renkleri
 const Color primaryPurple = Colors.deepPurple; // Ana Mor
@@ -75,6 +76,8 @@ class _CaregiverProfilpageState extends State<CaregiverProfilpage> {
   final CommentServiceHttp _commentService = CommentServiceHttp();
   final FavoriteService _favoriteService = FavoriteService();
   final ChatService _chatService = ChatService(); // Chat Service
+  final AuthService _authService = AuthService(); // Auth Service for refreshing bio
+
   List<Comment> _comments = [];
   String? _currentUserName;
   bool _isFavorite = false;
@@ -85,6 +88,11 @@ class _CaregiverProfilpageState extends State<CaregiverProfilpage> {
   int _followingCount = 0; // State for following
   int _reviewCount = 0; // State for reviews
   int? _resolvedUserId; // Backend'den gelen veya widget'tan alınan ID
+  
+  // Dynamic fields that can be refreshed from backend
+  late String _displayBio;
+  late String _displayPhoto;
+  late String _displayLocation;
 
   @override
   void initState() {
@@ -94,6 +102,11 @@ class _CaregiverProfilpageState extends State<CaregiverProfilpage> {
     _reviewCount = widget.reviews.length; // Init from widget
     _resolvedUserId = widget.caregiverId; // Başlangıçta widget'tan al
     
+    // Initialize display fields
+    _displayBio = widget.bio;
+    _displayPhoto = widget.userPhoto;
+    _displayLocation = widget.location;
+    
     _loadCurrentUser();
     _loadComments();
     _checkIfFavorite();
@@ -101,7 +114,32 @@ class _CaregiverProfilpageState extends State<CaregiverProfilpage> {
     
     // Her zaman backend'den güncel istatistikleri çek (ID veya Slug ile)
     _loadUserStats(widget.caregiverId);
+    
+    // Backend'den profil detaylarını çek (Bio vs güncellemesi için)
+    if (_resolvedUserId != null) {
+      _loadUserDetails(_resolvedUserId!);
+    }
   }
+
+  Future<void> _loadUserDetails(int userId) async {
+    try {
+      final user = await _authService.getUserById(userId);
+      if (user != null && mounted) {
+        setState(() {
+          if (user.bio != null && user.bio!.isNotEmpty) {
+             _displayBio = user.bio!;
+          }
+           if (user.photoUrl != null && user.photoUrl!.isNotEmpty) {
+             _displayPhoto = user.photoUrl!;
+          }
+          //DisplayName, Location vs de güncellenebilir eğer gerekirse
+        });
+      }
+    } catch (e) {
+      print("User details refresh error code: $e");
+    }
+  }
+
 
   Future<void> _loadUserStats(int? userId) async {
     try {
@@ -319,7 +357,7 @@ class _CaregiverProfilpageState extends State<CaregiverProfilpage> {
   }
 
   Widget _buildProfileImage(double radius) {
-    String path = widget.userPhoto;
+    String path = _displayPhoto;
     if (path.isEmpty || path == 'null') {
       return CircleAvatar(
         radius: radius,
@@ -367,12 +405,8 @@ class _CaregiverProfilpageState extends State<CaregiverProfilpage> {
     // Profil fotoğrafı için dinamik yarıçap (Örn: Ekran genişliğinin %10'u)
     final double avatarRadius = screenWidth * 0.10;
 
-    // Use current bio if available, fallback to widget.bio
-    // If caregiverData is passed (e.g. from preview), use it.
-    String displayBio = widget.bio;
-    if (widget.caregiverData != null && widget.caregiverData!.containsKey('bio')) {
-      displayBio = widget.caregiverData!['bio'] ?? "";
-    }
+    // Use current bio if available from state
+    String displayBio = _displayBio;
 
     return Scaffold(
       // Sayfa arka planı
@@ -451,7 +485,7 @@ class _CaregiverProfilpageState extends State<CaregiverProfilpage> {
                           Expanded(
                             // Konum metninin genişliğini sınırlamak için
                             child: Text(
-                              widget.location,
+                              _displayLocation,
                               style: TextStyle(color: Colors.grey.shade700),
                               maxLines: 1,
                               overflow: TextOverflow.ellipsis,
@@ -460,6 +494,7 @@ class _CaregiverProfilpageState extends State<CaregiverProfilpage> {
                         ],
                       ),
                     ],
+
                   ),
                 ),
               ],

@@ -2239,3 +2239,4 @@ C:\Users\erdem\Desktop\ZooyFinalSonrasi-master (1)\ZooyFinalSonrasi-master\Zoozy
 C:\Users\erdem\Desktop\ZooyFinalSonrasi-master (1)\ZooyFinalSonrasi-master\ZoozyApi\obj\Debug\net8.0\ZoozyApi.pdb
 C:\Users\erdem\Desktop\ZooyFinalSonrasi-master (1)\ZooyFinalSonrasi-master\ZoozyApi\obj\Debug\net8.0\ZoozyApi.genruntimeconfig.cache
 C:\Users\erdem\Desktop\ZooyFinalSonrasi-master (1)\ZooyFinalSonrasi-master\ZoozyApi\obj\Debug\net8.0\ref\ZoozyApi.dll
+C:\Users\erdem\Desktop\ZooyFinalSonrasi-master (1)\ZooyFinalSonrasi-master\ZoozyApi\obj\Debug\net8.0\ZoozyApi.sourcelink.json

@@ -326,6 +326,7 @@ class AuthService {
     await prefs.remove('email');
     await prefs.remove('displayName');
     await prefs.remove('photoUrl');
+    await prefs.remove('bio');
     await prefs.remove('provider');
     await prefs.remove('firebaseUid');
     await prefs.remove('profileImagePath'); // Yerel profil resmini de temizle
@@ -343,6 +344,9 @@ class AuthService {
     await prefs.setString('displayName', user['displayName']);
     if (user['photoUrl'] != null) {
       await prefs.setString('photoUrl', user['photoUrl']);
+    }
+    if (user['bio'] != null) {
+      await prefs.setString('bio', user['bio']);
     }
     await prefs.setString('provider', user['provider']);
     if (user['firebaseUid'] != null) {
@@ -444,6 +448,7 @@ class UserData {
   final String email;
   final String displayName;
   final String? photoUrl;
+  final String? bio;
   final String provider;
   final String? firebaseUid;
   final DateTime createdAt;
@@ -455,6 +460,7 @@ class UserData {
     required this.email,
     required this.displayName,
     this.photoUrl,
+    this.bio,
     required this.provider,
     this.firebaseUid,
     required this.createdAt,
@@ -468,6 +474,7 @@ class UserData {
       email: json['email'] ?? '',
       displayName: json['displayName'] ?? '',
       photoUrl: json['photoUrl'],
+      bio: json['bio'],
       provider: json['provider'] ?? 'local',
       firebaseUid: json['firebaseUid'],
       createdAt:
@@ -483,6 +490,7 @@ class UserData {
       'email': email,
       'displayName': displayName,
       'photoUrl': photoUrl,
+      'bio': bio,
       'provider': provider,
       'firebaseUid': firebaseUid,
       'createdAt': createdAt.toIso8601String(),

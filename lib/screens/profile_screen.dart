@@ -178,6 +178,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
           // Backend'den gelen veriyi yerel depolamaya güncelle
           await prefs.setString('displayName', user.displayName ?? '');
           await prefs.setString('email', user.email ?? '');
+          if (user.bio != null) {
+            await prefs.setString('bio', user.bio!);
+          }
           if (user.photoUrl != null && user.photoUrl!.isNotEmpty) {
             await prefs.setString('photoUrl', user.photoUrl!);
           } else {
