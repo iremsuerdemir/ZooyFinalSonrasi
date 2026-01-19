@@ -441,11 +441,13 @@ namespace ZoozyApi.Services
                 {
                     _logger.LogWarning($"Email gönderilemedi: {user.Email}. SMTP ayarlarını kontrol edin.");
                     
-                    // Müşteri mailin gitmediğini bilsin ama developer detayı görmesin
+                    // GELİŞTİRME MODU (DEV MODE): 
+                    // SMTP hatası olsa bile, geliştiricinin devam edebilmesi için başarılı dönüyoruz.
+                    // Şifre sıfırlama kodu konsol/terminal çıktısında (warn loglarında) yazar.
                     return new ResetPasswordResponse
                     {
-                        Success = false,
-                        Message = "E-posta gönderilemedi. Lütfen internet bağlantınızı kontrol edin veya destek ekibiyle iletişime geçin. (Hata Kodu: SMTP)"
+                        Success = true,
+                        Message = "Test Modu: Email gönderilemedi (Ayarlar hatalı) ancak kod konsola yazıldı. Lütfen terminali kontrol edin."
                     };
                 }
 

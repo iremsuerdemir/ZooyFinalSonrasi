@@ -136,7 +136,7 @@ class _BackersNearbyScreenState extends State<BackersNearbyScreen> {
           },
         ),
         title: Text(
-          'Yakındaki Bakıcılar - ${widget.serviceName}',
+          'Bakıcılar - ${widget.serviceName}',
           style: TextStyle(
             color: _primaryColor,
             fontWeight: FontWeight.bold,
@@ -166,44 +166,8 @@ class _BackersNearbyScreenState extends State<BackersNearbyScreen> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: <Widget>[
       
-            // --- Filtre Butonu ---
-            Padding(
-              padding: EdgeInsets.only(
-                  left: horizontalPadding, top: 16.0, bottom: 8.0),
-              child: OutlinedButton.icon(
-                onPressed: () {},
-               
-                label: const Text(
-                  'Filtrele',
-                  style: TextStyle(
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-                style: OutlinedButton.styleFrom(
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(18.0),
-                  ),
-                  side: const BorderSide(color: _accentColor, width: 1.5),
-                  foregroundColor: _accentColor,
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                ),
-              ),
-            ),
-
-            // Başlık
-            Padding(
-              padding: EdgeInsets.fromLTRB(horizontalPadding, 16.0, 16.0, 8.0),
-              child: const Text(
-                "Popüler Bakıcılar",
-                style: TextStyle(
-                  fontWeight: FontWeight.bold,
-                  fontSize: 18,
-                  color: Colors.black87,
-                ),
-              ),
-            ),
-
+     
+        SizedBox(height: 50),
             // 🔹 Bakıcı Listesi (Responsive GridView)
             if (_isLoading)
               const Center(

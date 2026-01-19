@@ -9,7 +9,6 @@ import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:zoozy/providers/service_provider.dart';
 import 'package:zoozy/screens/about_me_page.dart';
 import 'package:zoozy/screens/add_location.dart';
-
 import 'package:zoozy/screens/board_note_page.dart';
 import 'package:zoozy/screens/caregiverProfilPage.dart';
 import 'package:zoozy/screens/describe_services_page.dart';
