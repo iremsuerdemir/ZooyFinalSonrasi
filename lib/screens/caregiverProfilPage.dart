@@ -607,7 +607,7 @@ class _CaregiverProfilpageState extends State<CaregiverProfilpage> {
             Text(
               // Görüntüleme: Eğer parametreden gelen displayBio boşsa veya çok kısa/tekrarlı ise placeholder göster
               (displayBio.length < 10 || RegExp(r'(.)\1{4,}').hasMatch(displayBio))
-                  ? "Merhaba! Ben hayvanları çok seviyorum ve onların mutluluğu benim için her şeyden önemli. Profesyonel bakım hizmetimle dostunuz emin ellerde. İhtiyaçlarınıza özel çözümler sunmak için buradayım, benimle iletişime geçmekten çekinmeyin."
+                  ? "Bu kullanıcı kendisi hakkında henüz bilgi eklemedi."
                   : displayBio,
               style: TextStyle(color: Colors.grey.shade800, fontSize: 15),
             ),

@@ -192,7 +192,7 @@ class _CaregiverCardBalancedState extends State<CaregiverCardBalanced> {
           return Container(
              decoration: const BoxDecoration(
                image: DecorationImage(
-                 image: AssetImage('assets/images/caregiver1.png'),
+                 image: NetworkImage('https://avatars.mds.yandex.net/i?id=352630c4f79bc376f3c88c1d532872f80e30cdc6-5363089-images-thumbs&n=13'),
                  fit: BoxFit.cover,
                  alignment: Alignment.topCenter,
                ),

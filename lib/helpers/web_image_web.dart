@@ -21,7 +21,7 @@ Widget platformImage(String url, {BoxFit fit = BoxFit.cover}) {
       // Varsayılan placeholder veya transparan
       // element.src = 'assets/assets/images/caregiver1.png'; // Yol karmaşası olabilir
       // En güvenlisi:
-      element.src = 'https://placehold.co/400x400?text=Resim+Yok'; 
+      element.src = 'https://avatars.mds.yandex.net/i?id=352630c4f79bc376f3c88c1d532872f80e30cdc6-5363089-images-thumbs&n=13'; 
     });
     
     // Object-fit property handles the "BoxFit" logic in CSS
