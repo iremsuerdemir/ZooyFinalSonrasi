@@ -166,50 +166,8 @@ class _AgreementScreenState extends State<AgreementScreen> {
                                         ),
                                       ),
                                       const Divider(),
-                                      BulletTextItem(
-                                        text: RichText(
-                                          text: TextSpan(
-                                            style: TextStyle(
-                                                color: Colors.black87,
-                                                fontSize: fontSize,
-                                                height: 1.5),
-                                            children: const [
-                                              TextSpan(
-                                                text:
-                                                    'Hizmetlerinizden gelir elde edebilirsiniz. Bir müşteri sizi işe aldığında kazancınız ',
-                                              ),
-                                              TextSpan(
-                                                text: '%75 - %80',
-                                                style: TextStyle(
-                                                    fontWeight:
-                                                        FontWeight.bold),
-                                              ),
-                                              TextSpan(
-                                                text:
-                                                    ' arasında değişir. Eğer iletişim bilgileri önceden paylaşıldı ve hizmet platform dışı gerçekleştirildiyse, ',
-                                              ),
-                                              TextSpan(
-                                                text: '%40',
-                                                style: TextStyle(
-                                                    fontWeight: FontWeight.bold,
-                                                    color: Color(0xFFE53935)),
-                                              ),
-                                              TextSpan(
-                                                text:
-                                                    ' oranında bir ceza ödemeniz gerekebilir veya hesabınız geçici olarak askıya alınabilir. Cezanın bir kısmı hayvan barınaklarına bağışlanabilir.',
-                                              ),
-                                            ],
-                                          ),
-                                        ),
-                                      ),
-                                      const Divider(),
-                                      BulletTextItem(
-                                        text: Text(
-                                          'Müşteri lehine bir anlaşmazlık söz konusu olduğunda, yeterli hizmet sağlayamadığınız takdirde alınan veya alınacak tüm ödemeleri geri ödemeyi kabul edersiniz.',
-                                          style: TextStyle(fontSize: fontSize),
-                                        ),
-                                      ),
-                                      const Divider(),
+                    
+                              
                                       BulletTextItem(
                                         text: RichText(
                                           text: TextSpan(
@@ -220,23 +178,9 @@ class _AgreementScreenState extends State<AgreementScreen> {
                                             children: const [
                                               TextSpan(
                                                   text:
-                                                      'Siz platformun çalışanı değilsiniz, yalnızca hizmet sağlayan bir kullanıcı olarak sorumlusunuz. Acil durumlarda veya yerel kuralların ihlali durumunda tüm sorumluluk size aittir. Platform yalnızca '),
-                                              TextSpan(
-                                                  text: 'yardımcı olur',
-                                                  style: TextStyle(
-                                                      fontWeight:
-                                                          FontWeight.bold)),
-                                              TextSpan(text: ' ve '),
-                                              TextSpan(
-                                                  text:
-                                                      'hizmetleriniz için ödenen evcil hayvan sigortası',
-                                                  style: TextStyle(
-                                                      color: Color(0xFF673AB7),
-                                                      decoration: TextDecoration
-                                                          .underline)),
-                                              TextSpan(
-                                                  text:
-                                                      ' ile veteriner masraflarını azaltır.'),
+                                                      'Siz platformun çalışanı değilsiniz, yalnızca hizmet sağlayan bir kullanıcı olarak sorumlusunuz. Acil durumlarda veya yerel kuralların ihlali durumunda tüm sorumluluk size aittir.'),
+                                           
+                                          
                                             ],
                                           ),
                                         ),

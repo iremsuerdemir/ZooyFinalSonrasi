@@ -129,8 +129,8 @@ class _TermsOfServicePageState extends State<TermsOfServicePage> {
                                         ),
                                         const TextSpan(
                                           text:
-                                              "PetBacker, evcil hayvan sahiplerini ve hizmet sağlayıcıları bir araya getiren bir platformdur. "
-                                              "Sağlanan hizmetler, PetBacker tarafından doğrudan verilmez, üçüncü taraf sağlayıcılar tarafından sunulur.\n\n",
+                                              "Zoozy, evcil hayvan sahiplerini ve hizmet sağlayıcıları bir araya getiren bir platformdur. "
+                                              "Sağlanan hizmetler, Zoozy tarafından doğrudan verilmez, üçüncü taraf sağlayıcılar tarafından sunulur.\n\n",
                                         ),
                                         TextSpan(
                                           text: "2. Kullanıcı Yükümlülükleri\n",
@@ -144,18 +144,7 @@ class _TermsOfServicePageState extends State<TermsOfServicePage> {
                                               "Kullanıcılar, sağladıkları bilgilerin doğru ve güncel olduğunu beyan eder. "
                                               "Platformun kötüye kullanılması durumunda, hesap kalıcı olarak askıya alınabilir.\n\n",
                                         ),
-                                        TextSpan(
-                                          text: "3. Ödeme ve İptal\n",
-                                          style: const TextStyle(
-                                            fontWeight: FontWeight.bold,
-                                            color: Colors.black,
-                                          ),
-                                        ),
-                                        const TextSpan(
-                                          text:
-                                              "Ödemeler, PetBacker tarafından güvenli bir şekilde işlenir. "
-                                              "İptal politikaları, ilgili hizmet sağlayıcının belirlediği kurallara göre uygulanır.\n\n",
-                                        ),
+                                   
                                         TextSpan(
                                           text: "4. Sorumluluk Reddi\n",
                                           style: const TextStyle(
@@ -165,7 +154,7 @@ class _TermsOfServicePageState extends State<TermsOfServicePage> {
                                         ),
                                         const TextSpan(
                                           text:
-                                              "PetBacker, hizmet sağlayıcıların eylemlerinden veya sunulan hizmetlerin kalitesinden sorumlu değildir.\n\n",
+                                              "Zoozy, hizmet sağlayıcıların eylemlerinden veya sunulan hizmetlerin kalitesinden sorumlu değildir.\n\n",
                                         ),
                                         TextSpan(
                                           text: "5. Gizlilik\n",

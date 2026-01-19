@@ -187,16 +187,7 @@ class ListingProcessScreen extends StatelessWidget {
                                                         fontSize: fontSize),
                                                   ),
                                                   const SizedBox(height: 20),
-                                                  Text(
-                                                    'Daha Fazla Bilgi',
-                                                    style: TextStyle(
-                                                        fontSize: fontSize,
-                                                        color: const Color(
-                                                            0xFF7B4FDA),
-                                                        decoration:
-                                                            TextDecoration
-                                                                .underline),
-                                                  ),
+                                                
                                                 ],
                                               ),
                                             ),
@@ -252,16 +243,7 @@ class ListingProcessScreen extends StatelessWidget {
                                                         fontSize: fontSize),
                                                   ),
                                                   const SizedBox(height: 20),
-                                                  Text(
-                                                    'Daha Fazla Bilgi',
-                                                    style: TextStyle(
-                                                        fontSize: fontSize,
-                                                        color: const Color(
-                                                            0xFF7B4FDA),
-                                                        decoration:
-                                                            TextDecoration
-                                                                .underline),
-                                                  ),
+                                                  
                                                 ],
                                               ),
                                             ),
@@ -312,21 +294,12 @@ class ListingProcessScreen extends StatelessWidget {
                                                   ),
                                                   const SizedBox(height: 20),
                                                   Text(
-                                                    'PetBacker hakkında hızlı bir bilgilendirme alın, olası hatalardan kaçının ve daha fazla iş alma şansınızı artırın. Testi tamamlayarak rozet kazanın.',
+                                                    'Zoozy hakkında hızlı bir bilgilendirme alın, olası hatalardan kaçının ve daha fazla iş alma şansınızı artırın. Testi tamamlayarak rozet kazanın.',
                                                     style: TextStyle(
                                                         fontSize: fontSize),
                                                   ),
                                                   const SizedBox(height: 20),
-                                                  Text(
-                                                    'Daha Fazla Bilgi',
-                                                    style: TextStyle(
-                                                        fontSize: fontSize,
-                                                        color: const Color(
-                                                            0xFF7B4FDA),
-                                                        decoration:
-                                                            TextDecoration
-                                                                .underline),
-                                                  ),
+                                                  
                                                 ],
                                               ),
                                             ),
@@ -363,9 +336,8 @@ class ListingProcessScreen extends StatelessWidget {
                                                 text: 'Temel rehberi',
                                                 style: TextStyle(
                                                   color:
-                                                      const Color(0xFF7B4FDA),
-                                                  decoration:
-                                                      TextDecoration.underline,
+                                                       Colors.black,
+                                                
                                                 ),
                                               ),
                                               const TextSpan(

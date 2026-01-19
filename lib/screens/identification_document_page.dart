@@ -382,14 +382,7 @@ class _IdentificationDocumentPageState
                                   gerekliMi: false,
                                   belgeKey: "criminal",
                                 ),
-                                _belgeKarti(
-                                  ikon: Icons.credit_card,
-                                  baslik: "Ödeme Kimliği",
-                                  altYazi:
-                                      "(İsteğe bağlı) Ödeme bilgilerini doğrulamak için",
-                                  gerekliMi: false,
-                                  belgeKey: "payment",
-                                ),
+                          
                                 _belgeKarti(
                                   ikon: Icons.picture_as_pdf,
                                   baslik: "PDF Belgesi",
